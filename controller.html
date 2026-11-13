@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b111a">
+  <title>MotionPlay · Your controller</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100svh;background:radial-gradient(ellipse at 50% 35%,#163d3b 0,transparent 55%),#0b111a;color:#eaf5f3;font:16px/1.5 system-ui,sans-serif;padding:28px max(24px,env(safe-area-inset-left)) max(24px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center}main{max-width:420px;width:100%;text-align:center}header{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:420px;margin-bottom:38px}.brand{font-weight:800;letter-spacing:-.6px;font-size:22px}.brand span{color:#80e6c1}.tag{font-size:10px;letter-spacing:2px;color:#9fb4ba;border:1px solid #34464b;border-radius:20px;padding:5px 10px}h1{font-size:32px;line-height:1.15;letter-spacing:-1px;margin:0 0 12px}.muted{color:#9fb4ba;font-size:14px}.status{min-height:56px;margin:20px 0;font-size:15px;color:#a5ecd5}.hold{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;width:236px;height:236px;border-radius:50%;border:1px solid #7ef0c6;background:radial-gradient(circle at 40% 30%,#a5f9d5,#51cda7);color:#083a2c;box-shadow:0 0 0 14px #6ce4bd0a,0 0 0 28px #6ce4bd06,0 15px 80px #40e2ad1a;font-weight:800;font-size:24px;display:block;margin:40px auto;transition:transform .15s,filter .15s}.hold small{display:block;font-size:11px;text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-top:10px}.hold:disabled{filter:saturate(.3);opacity:.45}.hold.recording{transform:scale(.96);background:#f4cf82;border-color:#f4cf82;color:#423017}.action{border:1px solid #3b625a;border-radius:12px;background:#193d34;color:#ceffec;padding:14px 22px;font:600 15px system-ui;cursor:pointer}.action:disabled{opacity:.5}button:focus-visible{outline:3px solid white;outline-offset:5px}.instructions{display:flex;justify-content:center;gap:26px;font-size:12px;color:#9fb4ba}.instructions b{display:block;color:#d8eee9;font-size:15px}.note{margin:30px auto 0;max-width:340px;border-top:1px solid #24343b;padding-top:20px;font-size:12px;color:#8fa4ab}.meter{height:4px;background:#263c3e;border-radius:4px;overflow:hidden;margin:20px auto;width:200px}.meter i{display:block;background:#a5f9d5;height:100%;width:0}#reconnect{margin-top:14px}footer{margin-top:auto;padding-top:30px;font-size:10px;letter-spacing:2px;color:#718d92}
+  </style>
+</head>
+<body>
+  <header><div class="brand">motion<span>play</span></div><span class="tag">CONTROLLER</span></header>
+  <main>
+    <h1>Your move.<br>Your way.</h1>
+    <p class="muted">Turn a comfortable movement into a throw.</p>
+    <p id="status" class="status" role="status" aria-live="polite">Connecting to your lane…</p>
+    <button id="enable" class="action">Enable motion sensors</button>
+    <button id="hold" class="hold" disabled aria-label="Hold to record, then release to throw">Hold to swing<small>Release to bowl</small></button>
+    <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+    <div class="instructions"><span><b>01 · Hold</b>Record movement</span><span><b>02 · Move</b>Small is enough</span><span><b>03 · Release</b>Watch your lane</span></div>
+    <button id="reconnect" class="action" hidden>Reconnect</button>
+    <p class="note">Keep a firm grip on your phone. You never need to let go of it or swing hard. Ask Gemini on the laptop to adapt the controls to smaller movements.<br><br>Motion is captured only while holding the button. Compact measurements are sent for coaching.</p>
+  </main>
+  <footer>MOTIONPLAY AI · PLAY IN YOUR OWN WAY</footer>
+  <script type="module" src="/src/controller/main.js"></script>
+</body>
+</html>
