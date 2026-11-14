@@ -59,12 +59,12 @@ export function host(onSwing, onStatus = () => {}) {
       opened = true; clearTimeout(timeout);
       const url = new URL('/controller.html', location.href);
       url.searchParams.set('room', room);
-      resolve({ url: url.href, close: () => link.stop() });
+      resolve({ url: url.href, close: () => link.stop(), send: message => post(room, 'host', client, message).catch(() => {}) });
     });
   });
 }
 
-export function join(room, onStatus = () => {}) {
+export function join(room, onStatus = () => {}, onEvent = () => {}) {
   if (typeof room !== 'string' || !/^[\w-]{8,64}$/.test(room)) throw new Error('Open the QR code from the laptop to pair.');
   const client = randomId(); // kept across reconnects so the relay knows it is the same phone
   let link, closed = false, ready = false;
@@ -76,6 +76,7 @@ export function join(room, onStatus = () => {}) {
       if (closed || current !== link || !data) return;
       if (data.type === 'peer' && !data.online) update('connecting', 'The laptop page is closed. Open it to keep playing.');
       if (data.type === 'status' && typeof data.text === 'string') update(data.state, data.text.slice(0, 200));
+      if (data.type === 'haptic') onEvent(data);
     }, state => {
       if (closed || current !== link) return;
       if (state === 'refused') update('disconnected', 'Another phone is on this lane. Close it there, then tap Reconnect.');

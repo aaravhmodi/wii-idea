@@ -1,5 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 
+vi.mock('./haptics.js', () => ({ createHaptics: () => ({ unlock() {}, play() {} }), validPattern: () => null }));
 vi.mock('../net.js', () => ({ join: vi.fn(() => ({ close: vi.fn(), ready: false })) }));
 
 afterEach(() => { vi.unstubAllGlobals(); vi.resetModules(); });

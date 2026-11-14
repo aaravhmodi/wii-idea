@@ -1,4 +1,5 @@
 import { join } from '../net.js';
+import { createHaptics, validPattern } from './haptics.js';
 import { MAX_DURATION, MAX_SAMPLES, sampleFromEvent, validSwing } from './capture.js';
 
 const status = document.getElementById('status');
@@ -22,13 +23,14 @@ function cancel(message) {
   meter.style.width = '0';
   if (message) status.textContent = message;
 }
+const haptics = createHaptics();
 try {
   link = join(new URLSearchParams(location.search).get('room'), ({ state, text }) => {
     if (state !== 'ready' && recording) cancel();
     status.textContent = text;
     reconnect.hidden = !['disconnected', 'rejected'].includes(state);
     sync();
-  });
+  }, event => { const pattern = validPattern(event.pattern); if (pattern) haptics.play(pattern); });
 } catch (error) { status.textContent = error.message; enable.disabled = true; }
 
 if (!window.isSecureContext || !window.DeviceMotionEvent) {
@@ -37,6 +39,7 @@ if (!window.isSecureContext || !window.DeviceMotionEvent) {
 }
 
 enable.addEventListener('click', async () => {
+  haptics.unlock(); // sound needs a tap to start
   try {
     if (typeof DeviceMotionEvent.requestPermission === 'function') {
       const result = await DeviceMotionEvent.requestPermission();

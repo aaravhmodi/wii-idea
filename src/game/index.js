@@ -102,10 +102,11 @@ export function createGame(container) {
   let activeThrow = null, raf, last = performance.now(), resultTimer = 0;
   const cameraHome = new THREE.Vector3(0, 8.6, 17.2), cameraGoal = cameraHome.clone();
   const lookAt = new THREE.Vector3(0, 0, -3.4), lookGoal = lookAt.clone();
+  let onImpact = null;
   const impact = event => {
     if (!activeThrow) return;
     const strength = Math.abs(event.contact.getImpactVelocityAlongNormal());
-    if (strength > 1.5) audio.impact(strength);
+    if (strength > 1.5) { audio.impact(strength); onImpact?.(strength); }
   };
   physics.pins.forEach(pin => pin.body.addEventListener('collide', impact));
   function updateHud() {
@@ -160,6 +161,7 @@ export function createGame(container) {
   const observer = new ResizeObserver(resize); observer.observe(container); resize(); updateHud(); readyText(); raf = requestAnimationFrame(render);
   return {
     get busy() { return busy; },
+    set onImpact(listener) { onImpact = listener; },
     get score() { return { frames: score.frames.map(f => [...f]), totals: score.totals, total: score.total, frame: score.frame, roll: score.roll, complete: score.complete }; },
     throwBall(params) {
       if (disposed || busy || score.complete) return Promise.reject(new Error(disposed ? 'Game closed.' : busy ? 'A ball is already rolling.' : 'Game complete. Start a new game.'));

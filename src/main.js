@@ -19,7 +19,13 @@ const camera = createCamera(document.getElementById('camera'));
 const replay = createReplay(document.getElementById('replay'));
 const twin = createTwin(document.getElementById('twin'));
 const status = document.getElementById('status');
-let throwNo = 0, lastReview = null, mixedGame = false, adaptRun = 0;
+let throwNo = 0, lastReview = null, mixedGame = false, adaptRun = 0, sendToPhone = null, buzzed = false;
+game.onImpact = strength => {
+  if (buzzed) return; // one rattle per throw; pins collide dozens of times
+  buzzed = true;
+  const hit = Math.round(Math.min(160, 40 + strength * 12));
+  sendToPhone?.({ type: 'haptic', pattern: [hit, 30, hit * 0.6, 40, hit * 0.4, 50, 25] });
+};
 
 // Control mapping chosen by Gemini for this player; kept across reloads.
 const MAPPING_KEY = 'motionplay.mapping.v1';
@@ -73,6 +79,7 @@ async function onSwing({ samples, simulated = false }) {
   if (game.score.complete) { game.reset(); mixedGame = false; } // a swing after frame ten starts the next game
   if (simulated) mixedGame = true;
   const mine = ++throwNo;
+  buzzed = false;
   const features = extractFeatures(samples);
   const profile = toProfile(samples);
   const params = toThrowParams(features, mapping);
@@ -93,6 +100,7 @@ async function onSwing({ samples, simulated = false }) {
   const recent = getHistory().slice(-5).map(r => ({ source: 'sensor', features: r.features, result: r.result, params: r.params }));
   if (!simulated) recordThrow({ features, profile, params, result, at: Date.now() }); // simulated throws stay out of the player's statistics
   lab.show({ features, profile, bestProfile, result });
+  if (result.strike || result.spare) sendToPhone?.({ type: 'haptic', pattern: result.strike ? [220, 70, 220, 70, 320] : [150, 60, 150] });
   voice.notify({ type: 'throw', simulated, result, features, ballSpeed: params.speed, ...(seen.pose && { pose: seen.pose }) });
 
   // Release the phone as soon as the lane is ready; coaching can finish independently.
@@ -137,7 +145,8 @@ for (const tab of tabs) tab.addEventListener('click', () => {
 window.__swing = onSwing;
 
 host(onSwing, (text) => { status.textContent = text; })
-  .then(({ url }) => {
+  .then(({ url, send }) => {
+    sendToPhone = send;
     drawQR(document.getElementById('qr'), url).catch(() => { status.textContent = 'QR unavailable. Open the pairing link on your phone.'; });
     document.getElementById('url').textContent = url;
   })
