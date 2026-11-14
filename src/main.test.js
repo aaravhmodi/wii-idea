@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock('./game/index.js', () => ({ createGame: mocks.createGame }));
 vi.mock('./ui/swinglab.js', () => ({ createSwingLab: mocks.createSwingLab }));
+vi.mock('./ui/twin.js', () => ({ createTwin: () => ({ show() {} }) }));
 vi.mock('./coach/live.js', () => ({ createVoiceCoach: () => ({ notify() {} }) }));
 vi.mock('./ui/adapt.js', () => ({ createAdapt: () => {} }));
 vi.mock('./camera/replay.js', () => ({ createReplay: () => ({ show() {} }) }));

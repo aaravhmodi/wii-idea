@@ -6,9 +6,10 @@ export function createReplay(container) {
     <style>
       #${container.id} h2 { font: 400 22px Impact, "Arial Narrow Bold", Haettenschweiler, sans-serif; text-transform: uppercase; margin: 0 0 8px; }
       #${container.id} img { display: block; width: 100%; border: 2px solid #1b2238; background: #1b2238; }
+      #${container.id} img[hidden] { display: none; }
       #${container.id} p { margin: 6px 0 0; font: 700 12px "Courier New", ui-monospace, monospace; }
     </style>
-    <h2>Last throw replay</h2>
+    <h2>Camera replay</h2>
     <img alt="Looping camera replay of your most recent throw" hidden>
     <p aria-live="polite">Turn the camera on and throw to see a replay here.</p>`;
   const image = container.querySelector('img');
