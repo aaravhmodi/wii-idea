@@ -44,14 +44,14 @@ export function createTwin(root) {
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 50);
   camera.position.set(0, -0.4, 8.4); camera.lookAt(0, -0.4, 0); // faces the swing plane, so the arc is seen in full
   scene.add(new THREE.HemisphereLight('#ffffff', '#b9ae98', 2.6));
-  const ink = new THREE.MeshStandardMaterial({ color: '#1b2238', roughness: 0.6 });
+  const ink = new THREE.MeshStandardMaterial({ color: '#33485c', roughness: 0.5 });
   const pivot = new THREE.Group(); scene.add(pivot); // the shoulder
   const arm = new THREE.Mesh(new THREE.BoxGeometry(0.07, ARM, 0.07), ink); arm.position.y = -ARM / 2; pivot.add(arm);
   const phone = new THREE.Group(); phone.position.y = -ARM; pivot.add(phone);
   phone.add(new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.85, 0.07), ink));
-  const screen = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.76, 0.02), new THREE.MeshStandardMaterial({ color: '#d23b2a', roughness: 0.4 }));
-  screen.position.z = 0.04; phone.add(screen); // the red face shows the twist
-  const trail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: '#e0a526' })); scene.add(trail);
+  const screen = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.76, 0.02), new THREE.MeshStandardMaterial({ color: '#2aa7e6', roughness: 0.3 }));
+  screen.position.z = 0.04; phone.add(screen); // the bright face shows the twist
+  const trail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: '#ff9a1f' })); scene.add(trail);
   const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 12), ink); scene.add(shoulder);
 
   let angles = null, startedAt = 0, frame = null;

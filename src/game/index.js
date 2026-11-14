@@ -8,8 +8,8 @@ export function createGame(container) {
   const motionPreference = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
   const reducedMotion = () => motionPreference?.matches ?? false;
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#e8dfcb');
-  scene.fog = new THREE.Fog('#e8dfcb', 35, 75);
+  scene.background = new THREE.Color('#bfe6ff');
+  scene.fog = new THREE.Fog('#bfe6ff', 35, 75);
   const camera = new THREE.PerspectiveCamera(48, 1, .1, 100);
   camera.position.set(0, 8.6, 17.2); camera.lookAt(0, 0, -3.4);
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
@@ -23,8 +23,8 @@ export function createGame(container) {
   renderer.domElement.setAttribute('aria-label', 'Live 3D bowling lane');
   container.append(renderer.domElement);
   if (getComputedStyle(container).position === 'static') container.style.position = 'relative';
-  scene.add(new THREE.HemisphereLight('#fffaf0', '#966c41', 2.4));
-  const key = new THREE.DirectionalLight('#fce5c7', 3.2);
+  scene.add(new THREE.HemisphereLight('#ffffff', '#9fc4dd', 2.4));
+  const key = new THREE.DirectionalLight('#fff6e6', 3.2);
   key.position.set(-4, 14, 5); key.castShadow = true;
   key.shadow.mapSize.set(1024, 1024); key.shadow.camera.left = -6; key.shadow.camera.right = 6;
   key.shadow.camera.top = 20; key.shadow.camera.bottom = -20;
@@ -34,19 +34,19 @@ export function createGame(container) {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
     mesh.position.set(x, y, z); mesh.receiveShadow = true; scene.add(mesh); return mesh;
   };
-  box(38, .3, 60, 0, -.7, -8, material('#b9c7b0'));
+  box(38, .3, 60, 0, -.7, -8, material('#eaf5fb'));
   box(5, .4, 27, 0, -.24, -3, material('#966c41'));
   // Individually shaded maple boards give the original lane its own physical texture.
   for (let i = 0; i < 23; i++) {
     const color = new THREE.Color().setHSL(.105 + (i % 3) * .003, .48, .56 + (i % 5) * .018);
     box(.199, .025, 27, (i - 11) * .203, -.005, -3, material(color, .32));
   }
-  const gutter = material('#54545b', .25, .5);
-  const rail = material('#1b2238', .25, .5);
+  const gutter = material('#8a99a8', .25, .5);
+  const rail = material('#f4f8fb', .25, .2);
   for (const side of [-1, 1]) {
     box(.38, .08, 27, side * 2.55, -.1, -3, gutter);
     box(.13, .27, 27, side * 2.8, .01, -3, rail);
-    box(.035, .025, 26.7, side * 2.78, .16, -3, new THREE.MeshBasicMaterial({ color: '#b7c9b3' }));
+    box(.035, .025, 26.7, side * 2.78, .16, -3, new THREE.MeshBasicMaterial({ color: '#2aa7e6' }));
     box(.5, .4, 27, side * 7.5, -.3, -3, rail);
     box(.03, .02, 27, side * 7.5, -.07, -3, new THREE.MeshBasicMaterial({ color: '#966c41' }));
   }
@@ -55,13 +55,13 @@ export function createGame(container) {
     const arrow = new THREE.Mesh(new THREE.ConeGeometry(.075, .2, 3), material('#714d30'));
     arrow.rotation.x = -Math.PI / 2; arrow.position.set(i * .46, .04, -1.7 + Math.abs(i) * .16); scene.add(arrow);
   }
-  box(9, 4.5, .5, 0, 1.5, -15, material('#1b2238'));
-  box(8.9, .22, .03, 0, 2.5, -14.72, new THREE.MeshBasicMaterial({ color: '#b7c9b3' }));
-  box(8.9, .1, .03, 0, 2.12, -14.72, new THREE.MeshBasicMaterial({ color: '#d23b2a' }));
-  for (let i = -3; i <= 3; i++) box(.04, 1.1, .03, i * 1.1, .8, -14.7, new THREE.MeshBasicMaterial({ color: '#b7c9b3' }));
+  box(9, 4.5, .5, 0, 1.5, -15, material('#1878ba'));
+  box(8.9, .22, .03, 0, 2.5, -14.72, new THREE.MeshBasicMaterial({ color: '#ffffff' }));
+  box(8.9, .1, .03, 0, 2.12, -14.72, new THREE.MeshBasicMaterial({ color: '#ff9a1f' }));
+  for (let i = -3; i <= 3; i++) box(.04, 1.1, .03, i * 1.1, .8, -14.7, new THREE.MeshBasicMaterial({ color: '#8fd3f7' }));
 
   const physics = createPhysics();
-  const pinMaterial = material('#fffaf0', .22);
+  const pinMaterial = material('#ffffff', .22);
   const redMaterial = material('#d23b2a', .25);
   const pinPoints = [[.18,-.47],[.23,-.36],[.24,-.19],[.21,0],[.12,.18],[.11,.29],[.155,.39],[.14,.48],[.08,.53],[0,.55]].map(([x,y]) => new THREE.Vector2(x,y));
   const pinGeometry = new THREE.LatheGeometry(pinPoints, 20);
@@ -74,29 +74,29 @@ export function createGame(container) {
     }
     scene.add(group); return group;
   });
-  const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(.32, 32, 24), material('#d23b2a', .48));
+  const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(.32, 32, 24), material('#1f86cc', .2));
   ballMesh.castShadow = true; scene.add(ballMesh);
   for (const [x,z] of [[-.075,.04],[.075,.04],[0,-.1]]) {
     const hole = new THREE.Mesh(new THREE.SphereGeometry(.034, 8, 8), material('#1b2238'));
     hole.position.set(x, .303, z); ballMesh.add(hole);
   }
   const target = new THREE.Group(); scene.add(target); target.visible = false;
-  const targetMat = new THREE.MeshBasicMaterial({ color: '#779c79', transparent: true, opacity: .22, depthWrite: false });
+  const targetMat = new THREE.MeshBasicMaterial({ color: '#5cb531', transparent: true, opacity: .3, depthWrite: false });
   const targetFloor = new THREE.Mesh(new THREE.PlaneGeometry(1, 8), targetMat);
   targetFloor.rotation.x = -Math.PI / 2; targetFloor.position.set(0,.032,-5); target.add(targetFloor);
-  const targetLine = new THREE.Mesh(new THREE.PlaneGeometry(1, .09), new THREE.MeshBasicMaterial({ color: '#1b2238' }));
+  const targetLine = new THREE.Mesh(new THREE.PlaneGeometry(1, .09), new THREE.MeshBasicMaterial({ color: '#ffffff' }));
   targetLine.rotation.x = -Math.PI / 2; targetLine.position.set(0,.04,-8.5); target.add(targetLine);
 
   const hud = document.createElement('div');
-  hud.style.cssText = 'position:absolute;left:16px;right:16px;top:16px;z-index:2;pointer-events:none;color:#1b2238;font-family:Georgia,serif;background:#fffaf0ed;border:1px solid #1b2238;box-shadow:0 3px 0 #1b223812;';
-  hud.innerHTML = `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:8px 12px"><div style='font:700 10px "Courier New",monospace;letter-spacing:.1em'>MOTIONLAB / LANE 01 <span data-frame style="margin-left:8px;color:#52634f"></span></div><div style='font:700 11px "Courier New",monospace'>TOTAL <span data-total style="font-size:22px;margin-left:8px"></span></div></div><div data-frames style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr)) minmax(0,1.5fr);border-top:1px solid #1b2238"></div>`;
+  hud.style.cssText = 'position:absolute;left:16px;right:16px;top:16px;z-index:2;pointer-events:none;color:#33485c;font-family:"Segoe UI",system-ui,sans-serif;background:#ffffffee;border:2px solid #cfe3f1;border-radius:18px;overflow:hidden;box-shadow:0 4px 0 #c2dcee,0 10px 22px rgba(17,90,146,.15);';
+  hud.innerHTML = `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:8px 12px"><div style='font:700 12px "Segoe UI",system-ui,sans-serif;letter-spacing:.06em;color:#115a92'>MOTIONPLAY BOWL · LANE 1 <span data-frame style="margin-left:8px;color:#5a6f82"></span></div><div style='font:700 12px "Segoe UI",system-ui,sans-serif;color:#115a92'>TOTAL <span data-total style="font-size:22px;margin-left:8px"></span></div></div><div data-frames style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr)) minmax(0,1.5fr);border-top:2px solid #cfe3f1"></div>`;
   container.append(hud);
   const status = document.createElement('div');
-  status.style.cssText = 'position:absolute;bottom:16px;left:16px;right:16px;z-index:2;color:#1b2238;background:#fffaf0ed;border:1px solid #1b2238;padding:8px 12px;text-align:center;font:12px/1.5 "Courier New",monospace;pointer-events:none;';
+  status.style.cssText = 'position:absolute;bottom:16px;left:16px;right:16px;z-index:2;color:#115a92;background:#ffffffee;border:2px solid #cfe3f1;border-radius:999px;box-shadow:0 4px 0 #c2dcee;padding:8px 16px;text-align:center;font:700 14px/1.5 "Segoe UI",system-ui,sans-serif;pointer-events:none;';
   status.setAttribute('aria-live','polite'); container.append(status);
   const celebration = document.createElement('div');
   celebration.setAttribute('aria-hidden', 'true');
-  celebration.style.cssText = 'position:absolute;inset:43% 0 auto;z-index:3;text-align:center;pointer-events:none;opacity:0;color:#d23b2a;text-shadow:2px 2px 0 #fffaf0;font:400 clamp(36px,6vw,84px)/1 Impact,"Arial Narrow",sans-serif;letter-spacing:.02em;';
+  celebration.style.cssText = 'position:absolute;inset:43% 0 auto;z-index:3;text-align:center;pointer-events:none;opacity:0;color:#ff9a1f;text-shadow:0 4px 0 #115a92,0 0 22px #ffffff;font:800 clamp(40px,7vw,96px)/1 "Arial Rounded MT Bold","Segoe UI",system-ui,sans-serif;';
   container.append(celebration);
   let score = new BowlingScore(), busy = false, disposed = false, drill = null;
   let activeThrow = null, raf, last = performance.now(), resultTimer = 0;
@@ -115,15 +115,15 @@ export function createGame(container) {
     const list = hud.querySelector('[data-frames]'); list.replaceChildren();
     score.frames.forEach((frame, i) => {
       const cell = document.createElement('div');
-      cell.style.cssText = `min-width:0;text-align:center;background:${i === score.frameIndex ? '#b7c9b3' : 'transparent'};border-left:${i ? '1px solid #1b22384d' : '0'};font:700 11px "Courier New",ui-monospace,monospace;`;
+      cell.style.cssText = `min-width:0;text-align:center;background:${i === score.frameIndex ? '#bfe6ff' : 'transparent'};border-left:${i ? '1px solid #cfe3f1' : '0'};font:700 12px "Segoe UI",system-ui,sans-serif;`;
       const number = document.createElement('div'); number.textContent = i + 1;
-      number.style.cssText = 'padding:2px 0;color:#5b6257;font-size:9px;';
+      number.style.cssText = 'padding:2px 0;color:#5a6f82;font-size:10px;';
       if (i === score.frameIndex) cell.setAttribute('aria-current', 'step');
       const marks = document.createElement('div'); marks.textContent = frame.length ? frame.map((n, j) => n === 10 && (j === 0 || i === 9 && frame[j-1] === 10) ? 'X' : j > 0 && n + frame[j-1] === 10 && frame[j-1] !== 10 ? '/' : n === 0 ? '–' : n).join(' ') : '·';
-      marks.style.cssText = 'box-sizing:border-box;min-height:19px;padding:2px 0;white-space:nowrap;color:#1b2238;';
+      marks.style.cssText = 'box-sizing:border-box;min-height:19px;padding:2px 0;white-space:nowrap;color:#33485c;';
       // Darker red keeps small strike/spare marks at AA on paper and mustard.
-      if (/[X/]/.test(marks.textContent)) marks.style.color = '#7c2118';
-      const total = document.createElement('div'); total.textContent = score.totals[i] ?? '–'; total.style.cssText = 'font-size:14px;font-weight:700;padding:2px 0 4px;border-top:1px solid #1b223820';
+      if (/[X/]/.test(marks.textContent)) marks.style.color = '#d63a2f';
+      const total = document.createElement('div'); total.textContent = score.totals[i] ?? '–'; total.style.cssText = 'font-size:14px;font-weight:700;padding:2px 0 4px;border-top:1px solid #e3eef6';
       cell.append(number, marks, total); list.append(cell);
     });
   }
