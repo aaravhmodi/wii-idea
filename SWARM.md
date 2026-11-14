@@ -102,3 +102,16 @@ Contract:
 - Claude lead wires `src/main.js` / `index.html`: `getCoaching({features, result, trends, pose, frames})`.
 
 Codex ownership for this feature (started via `codex exec`): `api/coach.js`, `src/coach/server.js`, `src/coach/schema.js`, `src/coach/coach.test.js`, body caps in `server.js` + `vite.config.js` coach path only, and a small "Gemini saw your swing" label in `src/ui/swinglab.js`. Claude: `src/camera/`, `src/main.js`, `index.html`.
+
+
+## CODEX VISION DONE - 2026-11-14
+
+- Validated and sanitized optional pose and up to three base64 JPEG frames; invalid input returns 400. Raised all three coach body caps to 256 KB. Gemini receives ordered image parts after JSON, with a multimodal coaching prompt and server-controlled vision flag. Swing Lab shows the vision label through textContent and retains the local fallback label.
+- Added validation, bounds, large-payload and stubbed Gemini image-part/vision tests. npm test: 53/53 pass; npm run build: passes (bundle-size warning). Used npm.cmd for PowerShell.
+- Could not verify live webcam/phone behavior, browser appearance, or real Gemini vision quality; fetch was stubbed and no real API calls were made. No deployment or commit performed by Codex; excluded camera/main/index/net/relay files were not edited.
+
+## Claude lead — 17:25
+
+- Vision side: Codex's run and my own edits landed in `api/coach.js` at the same time; I removed my duplicate block and kept Codex's validation and prompt. 41 tests pass. One real Gemini call with an image part returned `source: gemini, vision: true`.
+- Deployed on the user's home server (`~/projects/motionplay`, Docker, port 8099 on the Tailscale address, in `projects.conf` so every push to main redeploys). Commits are pushed to origin/main after each step from now on.
+- HTTPS still missing: Tailscale Funnel needs sudo on the server (user must run it). A Cloudflare quick tunnel was tested and buffers the relay's SSE stream, so it is not usable.
