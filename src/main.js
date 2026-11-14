@@ -9,6 +9,7 @@ import { getAdaptation, getCoaching, getHistory, recordThrow, bestThrow, trends 
 import { validSwing } from './controller/capture.js';
 import { createCamera } from './camera/index.js';
 import { createReplay } from './camera/replay.js';
+import { createVoiceCoach } from './coach/live.js';
 
 const game = createGame(document.getElementById('game'));
 const lab = createSwingLab(document.getElementById('lab'));
@@ -21,6 +22,18 @@ let throwNo = 0;
 const MAPPING_KEY = 'motionplay.mapping.v1';
 let mapping = DEFAULT_MAPPING;
 try { mapping = validateMapping(JSON.parse(localStorage.getItem(MAPPING_KEY))); } catch { /* none saved, or an old format */ }
+function setMapping(next) {
+  if (game.busy) throw new Error('Wait for the ball to stop, then try again.');
+  mapping = next === null ? DEFAULT_MAPPING : validateMapping(next);
+  try { next === null ? localStorage.removeItem(MAPPING_KEY) : localStorage.setItem(MAPPING_KEY, JSON.stringify(mapping)); } catch { /* still applies for this session */ }
+}
+const voice = createVoiceCoach(document.getElementById('voice'), {
+  set_controls(args) { setMapping(args); return { applied: mapping }; },
+  set_drill(args) { if (game.busy) throw new Error('The ball is rolling; try again in a moment.'); game.setDrill(args); return 'ok'; },
+  clear_drill() { if (game.busy) throw new Error('The ball is rolling; try again in a moment.'); game.setDrill(null); return 'ok'; },
+  new_game() { if (game.busy) throw new Error('The ball is rolling; try again in a moment.'); ++throwNo; game.reset(); lab.reset(); return 'ok'; },
+  get_stats() { return { controls: mapping, score: game.score.total, frame: game.score.frame, last20: trends(getHistory()) }; },
+});
 createAdapt(document.getElementById('adapt'), {
   async adapt(request) {
     const history = getHistory();
@@ -28,15 +41,12 @@ createAdapt(document.getElementById('adapt'), {
     if (game.busy) throw new Error('Wait for the ball to stop, then try again.');
     const recent = history.slice(-5);
     const adaptation = await getAdaptation({ samples: recent.map(r => r.features), pins: recent.map(r => r.result.pinsDown), trends: trends(history), request });
-    mapping = validateMapping(adaptation.mapping);
-    try { localStorage.setItem(MAPPING_KEY, JSON.stringify(mapping)); } catch { /* still applies for this session */ }
-    if (!game.busy) game.setDrill(adaptation.drill);
+    setMapping(adaptation.mapping);
+    game.setDrill(adaptation.drill);
     return adaptation;
   },
   reset() {
-    if (game.busy) throw new Error('Wait for the ball to stop, then try again.');
-    mapping = DEFAULT_MAPPING;
-    try { localStorage.removeItem(MAPPING_KEY); } catch { /* nothing stored */ }
+    setMapping(null);
     game.setDrill(null);
   },
 });
@@ -63,6 +73,7 @@ async function onSwing({ samples }) {
   finally { newGame.disabled = false; }
   recordThrow({ features, profile, params, result, at: Date.now() });
   lab.show({ features, profile, bestProfile, result });
+  voice.notify({ type: 'throw', result, features, ballSpeed: params.speed, ...(seen.pose && { pose: seen.pose }) });
 
   // Release the phone as soon as the lane is ready; coaching can finish independently.
   void getCoaching({ features, result, trends: trends(getHistory()), ...(seen.pose && { pose: seen.pose }), ...(seen.frames.length && { frames: seen.frames }) }).then(reply => {

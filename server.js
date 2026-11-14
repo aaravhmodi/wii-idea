@@ -6,8 +6,9 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 import { relay } from './server/relay.js';
 import { POST as coach } from './api/coach.js';
 import { POST as adapt } from './api/adapt.js';
+import { POST as liveToken } from './api/live-token.js';
 
-const api = { '/api/coach': coach, '/api/adapt': adapt };
+const api = { '/api/coach': coach, '/api/adapt': adapt, '/api/live-token': liveToken };
 
 const dist = resolve('dist');
 const port = process.env.PORT || 8080;
