@@ -1,0 +1,10 @@
+# Home server: game, Gemini coach and phone relay in one container, published on the
+# Tailscale address. Set TAILSCALE_IP and GEMINI_API_KEY in .env (never committed).
+# Public HTTPS comes from Tailscale Funnel in front of port 8099.
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${TAILSCALE_IP}:8099:8080"
