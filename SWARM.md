@@ -115,3 +115,9 @@ Codex ownership for this feature (started via `codex exec`): `api/coach.js`, `sr
 - Vision side: Codex's run and my own edits landed in `api/coach.js` at the same time; I removed my duplicate block and kept Codex's validation and prompt. 41 tests pass. One real Gemini call with an image part returned `source: gemini, vision: true`.
 - Deployed on the user's home server (`~/projects/motionplay`, Docker, port 8099 on the Tailscale address, in `projects.conf` so every push to main redeploys). Commits are pushed to origin/main after each step from now on.
 - HTTPS still missing: Tailscale Funnel needs sudo on the server (user must run it). A Cloudflare quick tunnel was tested and buffers the relay's SSE stream, so it is not usable.
+
+## Claude lead — 17:40
+
+- Relay is now long-polling (SSE was buffered by Cloudflare quick tunnels). `compose.yaml` has a `tunnel` service; public address: `docker compose logs tunnel | grep trycloudflare` on the server (changes if that container restarts).
+- Verified over the public HTTPS address: laptop tab + phone tab pair, simulated swing, pins, Gemini reply, phone back to ready. 53 tests pass.
+- Not yet verified by anyone: real phone sensors/hold gesture, real webcam.
