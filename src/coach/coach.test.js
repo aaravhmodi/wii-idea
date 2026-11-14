@@ -118,7 +118,7 @@ describe('camera frames and pose', () => {
   });
   it('rejects bad frames and out-of-range pose before fetching', async () => {
     const fetch = vi.fn(); vi.stubGlobal('fetch', fetch);
-    expect((await POST(request({ ...payload, frames: ['QUJD', 'QUJD', 'QUJD', 'QUJD'] }))).status).toBe(400);
+    expect((await POST(request({ ...payload, frames: Array(7).fill('QUJD') }))).status).toBe(400);
     expect((await POST(request({ ...payload, frames: ['<script>'] }))).status).toBe(400);
     expect((await POST(request({ ...payload, pose: { ...pose, kneeBendDeg: 999 } }))).status).toBe(400);
     expect(fetch).not.toHaveBeenCalled();

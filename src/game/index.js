@@ -138,8 +138,9 @@ export function createGame(container) {
   }
   function render(now) {
     if (disposed) return;
-    const dt = Math.min((now - last) / 1000, 1/20); last = now;
-    physics.step(dt, activeThrow?.spin ?? 0);
+    const dt = Math.min((now - last) / 1000, 0.25); last = now;
+    // Slow frames are caught up in slices, so a throw lasts the same real time at any frame rate.
+    for (let left = dt; left > 1e-6; left -= 1 / 30) physics.step(Math.min(left, 1 / 30), activeThrow?.spin ?? 0);
     if (activeThrow) {
       activeThrow.elapsed += dt;
       if (drill && !activeThrow.crossed && physics.ball.position.z <= -8.5) {

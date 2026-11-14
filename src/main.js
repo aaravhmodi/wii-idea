@@ -5,12 +5,13 @@ import { extractFeatures, toProfile } from './motion/features.js';
 import { DEFAULT_MAPPING, toThrowParams, validateMapping } from './motion/mapping.js';
 import { createAdapt } from './ui/adapt.js';
 import { createSwingLab } from './ui/swinglab.js';
-import { getAdaptation, getCoaching, getHistory, recordThrow, bestThrow, trends } from './coach/index.js';
+import { getAdaptation, getCoaching, getPlan, getHistory, recordThrow, bestThrow, trends } from './coach/index.js';
 import { validSwing } from './controller/capture.js';
 import { createCamera } from './camera/index.js';
 import { createReplay } from './camera/replay.js';
 import { createVoiceCoach } from './coach/live.js';
 import { createTwin } from './ui/twin.js';
+import { createPlan } from './ui/plan.js';
 
 const game = createGame(document.getElementById('game'));
 const lab = createSwingLab(document.getElementById('lab'));
@@ -18,7 +19,7 @@ const camera = createCamera(document.getElementById('camera'));
 const replay = createReplay(document.getElementById('replay'));
 const twin = createTwin(document.getElementById('twin'));
 const status = document.getElementById('status');
-let throwNo = 0;
+let throwNo = 0, lastReview = null;
 
 // Control mapping chosen by Gemini for this player; kept across reloads.
 const MAPPING_KEY = 'motionplay.mapping.v1';
@@ -34,7 +35,18 @@ const voice = createVoiceCoach(document.getElementById('voice'), {
   set_drill(args) { if (game.busy) throw new Error('The ball is rolling; try again in a moment.'); game.setDrill(args); return 'ok'; },
   clear_drill() { if (game.busy) throw new Error('The ball is rolling; try again in a moment.'); game.setDrill(null); return 'ok'; },
   new_game() { if (game.busy) throw new Error('The ball is rolling; try again in a moment.'); ++throwNo; game.reset(); lab.reset(); return 'ok'; },
-  get_stats() { return { controls: mapping, score: game.score.total, frame: game.score.frame, last20: trends(getHistory()) }; },
+  get_stats() { return { controls: mapping, score: game.score.total, frame: game.score.frame, last20: trends(getHistory()), trainingPlan: plan.current }; },
+  async review_last_throw() {
+    if (!lastReview) throw new Error('No throw yet.');
+    const { insight, tip, vision } = await lastReview;
+    return { insight, tip, cameraFramesSeen: vision === true };
+  },
+});
+const plan = createPlan(document.getElementById('plan'), async ({ games, previous }) => {
+  const history = getHistory();
+  if (history.length < 3) throw new Error('Make at least three throws first.');
+  return getPlan({ games, previous, trends: trends(history), throws: history.map(r => ({ pins: r.result.pinsDown, ballSpeed: r.params.speed,
+    twistDeg: r.features.twistDeg, twistTiming: r.features.twistTiming, smoothness: r.features.smoothness })) });
 });
 createAdapt(document.getElementById('adapt'), {
   async adapt(request) {
@@ -53,7 +65,7 @@ createAdapt(document.getElementById('adapt'), {
   },
 });
 
-async function onSwing({ samples }) {
+async function onSwing({ samples, simulated = false }) {
   if (!validSwing({ type: 'swing', samples })) throw new Error('Invalid motion recording.');
   if (game.busy) return;
   if (game.score.complete) game.reset(); // a swing after frame ten starts the next game
@@ -63,7 +75,8 @@ async function onSwing({ samples }) {
   const params = toThrowParams(features, mapping);
   // The message arrives right after release, so the last durationMs (+ relay delay margin) of camera buffer is the swing.
   const seen = camera.active ? camera.capture(features.durationMs + 300) : { frames: [], pose: null };
-  replay.show(seen.clip);
+  // The camera clip is cut half a second later so it includes the follow-through.
+  if (camera.active) setTimeout(() => replay.show(camera.capture(features.durationMs + 800).clip), 500);
   twin.show(samples);
   const bestProfile = bestThrow(getHistory())?.profile ?? null;
 
@@ -74,14 +87,16 @@ async function onSwing({ samples }) {
   let result;
   try { result = await game.throwBall(params); }
   finally { newGame.disabled = false; }
-  recordThrow({ features, profile, params, result, at: Date.now() });
+  const recent = getHistory().slice(-5).map(r => ({ source: 'sensor', features: r.features, result: r.result, params: r.params }));
+  if (!simulated) recordThrow({ features, profile, params, result, at: Date.now() }); // simulated throws stay out of the player's statistics
   lab.show({ features, profile, bestProfile, result });
-  voice.notify({ type: 'throw', result, features, ballSpeed: params.speed, ...(seen.pose && { pose: seen.pose }) });
+  voice.notify({ type: 'throw', simulated, result, features, ballSpeed: params.speed, ...(seen.pose && { pose: seen.pose }) });
 
   // Release the phone as soon as the lane is ready; coaching can finish independently.
-  void getCoaching({ features, result, trends: trends(getHistory()), ...(seen.pose && { pose: seen.pose }), ...(seen.frames.length && { frames: seen.frames }) }).then(reply => {
-    if (mine === throwNo) lab.setCoach(reply);
-  });
+  lastReview = getCoaching({ features, result, trends: trends(getHistory()), source: simulated ? 'simulation' : 'sensor', mapping, ...(recent.length && { recent }),
+    ...(seen.pose && { pose: seen.pose }), ...(seen.frames.length && { frames: seen.frames }) });
+  void lastReview.then(reply => { if (mine === throwNo) lab.setCoach(reply); });
+  if (game.score.complete && !simulated) void plan.gameFinished(game.score.total);
   return result;
 }
 
@@ -90,6 +105,28 @@ document.getElementById('newgame').addEventListener('click', () => {
   ++throwNo;
   game.reset();
   lab.reset();
+});
+
+// Backup for when no phone can pair: a synthetic swing, labelled as simulated everywhere it goes.
+document.getElementById('simulate').addEventListener('click', () => {
+  if (game.busy) return;
+  const power = 0.6 + Math.random() * 0.5, twist = (Math.random() - 0.5) * 120;
+  const samples = Array.from({ length: 60 }, (_, i) => {
+    const p = Math.sin(Math.PI * i / 59);
+    return { t: i * 16, ax: 0, ay: 34 * power * p, az: 5 * p, rx: 520 * power * p, ry: twist * p, rz: 0 };
+  });
+  const before = status.textContent;
+  status.textContent = 'Simulated throw (not a real swing)';
+  onSwing({ samples, simulated: true }).catch(() => {}).finally(() => { if (status.textContent.startsWith('Simulated')) status.textContent = before; });
+});
+
+// Tabs: one group of side panels at a time.
+const tabs = [...document.querySelectorAll('#tabs [role=tab]')];
+for (const tab of tabs) tab.addEventListener('click', () => {
+  for (const other of tabs) {
+    other.setAttribute('aria-selected', String(other === tab));
+    document.getElementById(other.getAttribute('aria-controls')).hidden = other !== tab;
+  }
 });
 
 // Same entry point the phone uses; lets fixtures drive the full loop without a phone.

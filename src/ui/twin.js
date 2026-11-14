@@ -21,6 +21,7 @@ const CSS = `
   .twin h2 { font: 400 22px Impact, "Arial Narrow Bold", Haettenschweiler, sans-serif; text-transform: uppercase; margin: 0; }
   .twin canvas { display: block; width: 100%; height: 220px; border: 2px solid #1b2238; background: #f2e8d5; }
   .twin p { margin: 0; font-size: 12px; }
+  .twin a { font-size: 12px; color: #1b2238; }
   .twin [data-numbers] { font: 700 13px "Courier New", ui-monospace, monospace; }
 `;
 const ARM = 2.2, PAUSE_MS = 700;
@@ -30,6 +31,7 @@ export function createTwin(root) {
     <h2>Phone replay</h2>
     <canvas role="img" aria-label="Replay of how your phone moved during the last throw. Throw to see it."></canvas>
     <p data-numbers aria-live="polite">Throw to see how your phone moved.</p>
+    <a data-save download="swing.json" hidden>Download this swing's sensor data</a>
     <p>Built from the phone's motion sensors: the swing arc and wrist twist are real, the arm length is assumed.</p>
   </div>`;
   const canvas = root.querySelector('canvas');
@@ -76,6 +78,9 @@ export function createTwin(root) {
   return {
     show(samples) {
       angles = swingAngles(samples);
+      const save = root.querySelector('[data-save]');
+      save.href = `data:application/json,${encodeURIComponent(JSON.stringify({ type: 'swing', samples }))}`;
+      save.hidden = false;
       const swings = angles.map(a => a.swing), twist = angles.at(-1).twist;
       const arc = Math.max(...swings) - Math.min(...swings);
       trail.geometry.setFromPoints(angles.map(a => new THREE.Vector3(0, -ARM, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), rad(a.swing))));

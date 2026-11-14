@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock('./game/index.js', () => ({ createGame: mocks.createGame }));
 vi.mock('./ui/swinglab.js', () => ({ createSwingLab: mocks.createSwingLab }));
+vi.mock('./ui/plan.js', () => ({ createPlan: () => ({ current: null, gameFinished() {} }) }));
 vi.mock('./ui/twin.js', () => ({ createTwin: () => ({ show() {} }) }));
 vi.mock('./coach/live.js', () => ({ createVoiceCoach: () => ({ notify() {} }) }));
 vi.mock('./ui/adapt.js', () => ({ createAdapt: () => {} }));
@@ -15,7 +16,7 @@ vi.mock('./camera/index.js', () => ({ createCamera: () => ({ active: false }) })
 vi.mock('./net.js', () => ({ host: mocks.host }));
 vi.mock('./controller/qr.js', () => ({ drawQR: mocks.drawQR }));
 vi.mock('./coach/index.js', () => ({
-  getAdaptation: vi.fn(), getCoaching: mocks.getCoaching, recordThrow: mocks.recordThrow,
+  getAdaptation: vi.fn(), getPlan: vi.fn(), getCoaching: mocks.getCoaching, recordThrow: mocks.recordThrow,
   getHistory: () => [], bestThrow: () => null, trends: () => ({ count: 0 }),
 }));
 
@@ -38,11 +39,11 @@ beforeEach(async () => {
     reset: vi.fn(() => { game.score.complete = false; }),
   };
   lab = { show: vi.fn(), setCoach: vi.fn(), reset: vi.fn() };
-  elements = Object.fromEntries(['game', 'lab', 'status', 'newgame', 'qr', 'url'].map(id => [id, {
+  elements = Object.fromEntries(['game', 'lab', 'status', 'newgame', 'simulate', 'qr', 'url'].map(id => [id, {
     disabled: false, textContent: '', listeners: {},
     addEventListener(type, listener) { this.listeners[type] = listener; },
   }]));
-  vi.stubGlobal('document', { getElementById: id => elements[id] });
+  vi.stubGlobal('document', { getElementById: id => elements[id], querySelectorAll: () => [] });
   vi.stubGlobal('window', {});
   mocks.createGame.mockReturnValue(game);
   mocks.createSwingLab.mockReturnValue(lab);

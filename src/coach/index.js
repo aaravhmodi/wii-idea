@@ -69,3 +69,10 @@ export async function getAdaptation(data) {
     return reply;
   } catch { return fallbackAdaptation(data); }
 }
+
+export async function getPlan(data) {
+  const response = await fetch('/api/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data), signal: AbortSignal.timeout(26000) }).catch(() => null);
+  if (!response?.ok) throw new Error('The plan could not be written right now. Try again.');
+  return response.json();
+}

@@ -20,6 +20,16 @@
     #newgame:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #1b2238; }
     #newgame:disabled { opacity: .5; box-shadow: none; }
     #newgame:focus-visible { outline: 3px solid #d23b2a; outline-offset: 3px; }
+    #simulate { border: 2px solid #1b2238; background: #f2e8d5; color: #1b2238; padding: 8px 12px; cursor: pointer; font: 700 12px "Courier New", ui-monospace, monospace; }
+    #simulate:focus-visible { outline: 3px solid #d23b2a; outline-offset: 3px; }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    #tabs { display: grid; grid-template-columns: repeat(3, 1fr); border: 2px solid #1b2238; }
+    #tabs button { border: 0; background: #f2e8d5; color: #1b2238; padding: 8px 4px; cursor: pointer; font: 400 18px Impact, "Arial Narrow Bold", Haettenschweiler, sans-serif; text-transform: uppercase; }
+    #tabs button + button { border-left: 2px solid #1b2238; }
+    #tabs button[aria-selected=true] { background: #1b2238; color: #f2e8d5; }
+    #tabs button:focus-visible { outline: 3px solid #d23b2a; outline-offset: -3px; }
+    .tabpanel { display: flex; flex-direction: column; gap: 16px; }
+    .tabpanel[hidden] { display: none; }
     #url { font: 11px "Courier New", ui-monospace, monospace; word-break: break-all; margin-top: 4px; }
     @media (max-width: 800px) { body { grid-template-columns: 1fr; } #game { height: 60vh; } aside { height: auto; border-left: 0; border-top: 4px solid #1b2238; } }
   </style>
@@ -36,13 +46,25 @@
         <div id="url"></div>
       </div>
     </section>
-    <section id="camera" aria-label="Camera coach"></section>
-    <section id="twin" aria-label="Phone replay"></section>
-    <section id="replay" aria-label="Last throw replay"></section>
-    <section id="voice" aria-label="Voice coach"></section>
-    <section id="adapt" aria-label="Adapt the controls to you"></section>
-    <button id="newgame" type="button">New game</button>
-    <section id="lab" aria-label="Swing Lab"></section>
+    <nav id="tabs" role="tablist" aria-label="Side panels">
+      <button type="button" role="tab" id="t-play" aria-controls="tab-play" aria-selected="true">Play</button>
+      <button type="button" role="tab" id="t-replay" aria-controls="tab-replay" aria-selected="false">Replay</button>
+      <button type="button" role="tab" id="t-coach" aria-controls="tab-coach" aria-selected="false">Coach</button>
+    </nav>
+    <div id="tab-play" class="tabpanel" role="tabpanel" aria-labelledby="t-play">
+      <div class="row"><button id="newgame" type="button">New game</button><button id="simulate" type="button">Simulated throw</button></div>
+      <section id="voice" aria-label="Voice coach"></section>
+      <section id="camera" aria-label="Camera coach"></section>
+      <section id="adapt" aria-label="Adapt the controls to you"></section>
+    </div>
+    <div id="tab-replay" class="tabpanel" role="tabpanel" aria-labelledby="t-replay" hidden>
+      <section id="twin" aria-label="Phone replay"></section>
+      <section id="replay" aria-label="Camera replay"></section>
+    </div>
+    <div id="tab-coach" class="tabpanel" role="tabpanel" aria-labelledby="t-coach" hidden>
+      <section id="lab" aria-label="Swing Lab"></section>
+      <section id="plan" aria-label="Training plan"></section>
+    </div>
   </aside>
   <script type="module" src="/src/main.js"></script>
 </body>

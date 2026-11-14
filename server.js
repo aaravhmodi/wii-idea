@@ -7,8 +7,19 @@ import { relay } from './server/relay.js';
 import { POST as coach } from './api/coach.js';
 import { POST as adapt } from './api/adapt.js';
 import { POST as liveToken } from './api/live-token.js';
+import { POST as plan } from './api/plan.js';
 
-const api = { '/api/coach': coach, '/api/adapt': adapt, '/api/live-token': liveToken };
+// Each visitor may make 40 API calls a minute; these endpoints spend the Gemini key.
+const calls = new Map();
+setInterval(() => calls.clear(), 60000).unref();
+function limited(req) {
+  const ip = req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '';
+  const count = (calls.get(ip) ?? 0) + 1;
+  calls.set(ip, count);
+  return count > 40;
+}
+
+const api = { '/api/coach': coach, '/api/adapt': adapt, '/api/live-token': liveToken, '/api/plan': plan };
 
 const dist = resolve('dist');
 const port = process.env.PORT || 8080;
@@ -20,6 +31,7 @@ createServer(async (req, res) => {
     const path = req.url.split('?')[0];
     if (Object.hasOwn(api, path)) {
       if (req.method !== 'POST') return res.writeHead(405).end();
+      if (limited(req)) return res.writeHead(429, { 'Retry-After': '60' }).end('Too many requests. Try again in a minute.');
       const chunks = [];
       let size = 0;
       for await (const chunk of req) {

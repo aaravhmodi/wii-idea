@@ -144,7 +144,7 @@ export function createSwingLab(root) {
     },
     setCoach(reply) {
       find('coach-title').textContent = reply?.source === 'gemini' ? 'Gemini' : reply?.source === 'fallback' ? 'Local coaching' : 'Coach';
-      find('vision').textContent = reply?.vision === true ? 'Gemini looked at 3 frames + phone sensors' : '';
+      find('vision').textContent = reply?.vision === true ? 'Gemini looked at camera frames of this swing + phone sensors' : '';
       find('insight').textContent = reply?.insight ?? 'Reviewing your throw…';
       find('tip').textContent = reply?.tip ?? 'Watch your motion profile while the coach prepares your next tip.';
       find('consistency').textContent = reply ? `Consistency ${Math.round(Math.max(0, Math.min(100, finite(reply.consistency))))}/100` : '';

@@ -7,7 +7,7 @@ const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/pose_landmark
 const KEEP_MS = 6000;      // rolling buffer length
 const FRAME_EVERY_MS = 100; // 10 fps: smooth enough for the replay panel
 const POSE_EVERY_MS = 30;  // caps the buffer at 200 pose samples
-const MAX_B64 = 53000;     // base64 chars for just under 40 KB of JPEG
+const MAX_B64 = 36000;     // base64 chars for about 27 KB of JPEG, so six frames fit the coach's 256 KB body cap
 const BONES = [[11, 12], [11, 23], [12, 24], [23, 24], [23, 25], [25, 27], [24, 26], [26, 28], [11, 13], [13, 15], [12, 14], [14, 16]];
 
 const CSS = `
@@ -57,7 +57,7 @@ export function createCamera(container) {
     <canvas role="img" aria-label="Live camera view with your body outline drawn over it" hidden></canvas>
     <div class="cam-live" hidden></div>
     <div class="cam-status" aria-live="polite">Camera is off.</div>
-    <p class="cam-note">Body tracking runs on this laptop. While the camera is on, three still frames of each swing are sent to Google Gemini for coaching; nothing is sent when it is off.</p>`;
+    <p class="cam-note">Body tracking runs on this laptop. While the camera is on, up to six still frames of each swing are sent to Google Gemini for coaching; nothing is sent when it is off.</p>`;
   const button = container.querySelector('button');
   const canvas = container.querySelector('canvas');
   const live = container.querySelector('.cam-live');
@@ -196,7 +196,7 @@ export function createCamera(container) {
   function capture(durationMs) {
     const from = performance.now() - Math.min(6000, Math.max(300, Number(durationMs) || 0));
     const f = frames.filter(x => x.t >= from);
-    const picks = [...new Set([0, Math.floor((f.length - 1) / 2), f.length - 1])].filter(i => i >= 0);
+    const picks = [...new Set(Array.from({ length: 6 }, (_, i) => Math.round(i * (f.length - 1) / 5)))].filter(i => i >= 0); // six evenly spaced
     return {
       frames: picks.map(i => f[i].jpeg),
       clip: f.map(x => x.jpeg), // every buffered frame of the window, for the replay panel
