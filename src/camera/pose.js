@@ -68,3 +68,55 @@ export function poseStats(samples, aspect = 4 / 3) {
     visibility: clamp(visSum / (s.length * used.length), 0, 1),
   };
 }
+
+// --- Hand path (the hand holding the phone) for the replay beams ---------------------------------
+// Points are [u, v]: offset of the throwing wrist from the throwing shoulder in shoulder widths
+// (u right, v down, as the camera sees it), so paths from different throws and positions compare.
+
+/** samples: landmark arrays, oldest first. Returns { path, anchor } or null. anchor places the path on the last frame. */
+export function handPath(samples, aspect = 4 / 3) {
+  const s = (samples ?? []).filter(visibleBody);
+  if (s.length < 3) return null;
+  const side = throwingSide(s, aspect);
+  const width = lm => dist(pt(lm, SHOULDER, aspect), pt(lm, SHOULDER + 1, aspect));
+  const step = Math.max(1, Math.ceil(s.length / 40)); // at most about 40 points
+  const path = [];
+  for (let i = 0; i < s.length; i += step) {
+    const lm = s[i], sh = pt(lm, SHOULDER + side, aspect), w = pt(lm, WRIST + side, aspect), wide = width(lm);
+    if (wide > 0 && Number.isFinite(w[0]) && Number.isFinite(w[1])) path.push([clamp((w[0] - sh[0]) / wide, -6, 6, 0), clamp((w[1] - sh[1]) / wide, -6, 6, 0)]);
+  }
+  const last = s[s.length - 1];
+  return path.length < 3 ? null : { path, anchor: { x: last[SHOULDER + side].x, y: last[SHOULDER + side].y, width: width(last) } };
+}
+
+/** The same swing as a smooth pendulum: every point keeps its direction from the shoulder but at one constant arm length. */
+export function pendulumPath(path) {
+  const radius = path.map(([u, v]) => Math.hypot(u, v)).sort((a, b) => a - b)[Math.floor(path.length / 2)];
+  return path.map(([u, v]) => { const length = Math.hypot(u, v) || 1; return [u / length * radius, v / length * radius]; });
+}
+
+/** How far the hand was from the target path: mean gap, where it was largest (0..1 through the swing), and the gap at release. */
+export function comparePaths(path, target) {
+  const at = (points, f) => points[Math.round(f * (points.length - 1))];
+  let sum = 0, worst = 0, worstAt = 0;
+  const n = 20;
+  for (let i = 0; i <= n; i++) {
+    const a = at(path, i / n), b = at(target, i / n), gap = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    sum += gap;
+    if (gap > worst) { worst = gap; worstAt = i / n; }
+  }
+  const end = path[path.length - 1], goal = target[target.length - 1];
+  return { meanGap: sum / (n + 1), worstGap: worst, worstAt, releaseAcross: end[0] - goal[0], releaseDown: end[1] - goal[1] };
+}
+
+/** One plain sentence on how to bring the hand's beam onto the target beam. */
+export function pathTip({ meanGap, worstGap, worstAt, releaseAcross, releaseDown }, best) {
+  const goal = best ? 'your best throw' : 'a smooth pendulum';
+  if (worstGap < 0.25) return `Your hand stayed on the path of ${goal}. Repeat that swing.`;
+  const when = worstAt < 0.34 ? 'in the backswing' : worstAt < 0.67 ? 'through the middle of the swing' : 'at the release';
+  const parts = [];
+  if (Math.abs(releaseAcross) > 0.2) parts.push(`${Math.abs(releaseAcross).toFixed(1)} shoulder widths to the ${releaseAcross > 0 ? 'right' : 'left'} of it in the picture`);
+  if (Math.abs(releaseDown) > 0.2) parts.push(`${Math.abs(releaseDown).toFixed(1)} ${releaseDown > 0 ? 'lower' : 'higher'}`);
+  const finish = parts.length ? ` You finished ${parts.join(' and ')}.` : '';
+  return `Your hand drifted furthest from ${goal} ${when} (${worstGap.toFixed(1)} shoulder widths, ${meanGap.toFixed(1)} on average).${finish} Bring the red beam onto the dashed one.`;
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { poseStats, throwingSide, armAngleDeg } from './pose.js';
+import { poseStats, throwingSide, armAngleDeg, handPath, pendulumPath, comparePaths, pathTip } from './pose.js';
 
 // A person standing square to a 4:3 camera, arms hanging. Angles are drawn in true (aspect-corrected) space.
 function body({ rightArmDeg = 0, kneeDrop = 0, visibility = 0.9 } = {}) {
@@ -78,4 +78,32 @@ describe('poseStats', () => {
 
 it('imports in node without touching the DOM', async () => {
   expect(typeof (await import('./index.js')).createCamera).toBe('function');
+});
+
+describe('hand path beams', () => {
+  const swing = [0, -30, -60, -30, 0, 40, 80, 120, 150].map(d => body({ rightArmDeg: d }));
+
+  it('tracks the throwing wrist relative to the shoulder, in shoulder widths', () => {
+    const { path, anchor } = handPath(swing);
+    expect(path).toHaveLength(9);
+    expect(path[0][0]).toBeCloseTo(0, 5);       // arm hanging: straight below the shoulder
+    expect(path[0][1]).toBeCloseTo(1.4, 5);     // 0.28 arm / 0.20 shoulder width
+    expect(anchor.width).toBeCloseTo(0.2, 5);
+    expect(handPath(swing.slice(0, 2))).toBeNull();
+  });
+
+  it('a perfect pendulum matches its own target and gets a keep-going tip', () => {
+    const { path } = handPath(swing);
+    const gap = comparePaths(path, pendulumPath(path));
+    expect(gap.worstGap).toBeLessThan(0.05);
+    expect(pathTip(gap, false)).toContain('stayed on the path');
+  });
+
+  it('names where and how far the hand left the target', () => {
+    const { path } = handPath(swing);
+    const off = path.map(([u, v], i) => (i === path.length - 1 ? [u + 0.8, v] : [u, v]));
+    const gap = comparePaths(off, path);
+    expect(gap.releaseAcross).toBeCloseTo(0.8, 5);
+    expect(pathTip(gap, true)).toMatch(/your best throw at the release.*0\.8 shoulder widths to the right/);
+  });
 });

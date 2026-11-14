@@ -1,4 +1,4 @@
-import { poseStats, throwingSide, armAngleDeg, visibleBody } from './pose.js';
+import { poseStats, throwingSide, armAngleDeg, visibleBody, handPath } from './pose.js';
 
 // Pinned to the installed @mediapipe/tasks-vision version; bump both together.
 const WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm';
@@ -198,10 +198,12 @@ export function createCamera(container) {
     const f = frames.filter(x => x.t >= from);
     if (!f.length) return { frames: [], clip: [], pose: null }; // just switched on, or the tab was in the background
     const picks = [...new Set(Array.from({ length: 6 }, (_, i) => Math.round(i * (f.length - 1) / 5)))].filter(i => i >= 0); // six evenly spaced
+    const window = poses.filter(p => p.t >= from).map(p => p.lm), aspect = canvas.width / canvas.height;
     return {
       frames: picks.map(i => f[i].jpeg),
       clip: f.map(x => x.jpeg), // every buffered frame of the window, for the replay panel
-      pose: poseStats(poses.filter(p => p.t >= from).map(p => p.lm), canvas.width / canvas.height),
+      pose: poseStats(window, aspect),
+      ...handPath(window, aspect), // path + anchor of the hand holding the phone, when the upper body was in view
     };
   }
 

@@ -9,6 +9,7 @@ import { getAdaptation, getCoaching, getPlan, getHistory, recordThrow, bestThrow
 import { validSwing } from './controller/capture.js';
 import { createCamera } from './camera/index.js';
 import { createReplay } from './camera/replay.js';
+import { pendulumPath } from './camera/pose.js';
 import { createVoiceCoach } from './coach/live.js';
 import { createTwin } from './ui/twin.js';
 import { createPlan } from './ui/plan.js';
@@ -86,7 +87,14 @@ async function onSwing({ samples, simulated = false }) {
   // The message arrives right after release, so the last durationMs (+ relay delay margin) of camera buffer is the swing.
   const seen = camera.active ? camera.capture(features.durationMs + 300) : { frames: [], pose: null };
   // The camera clip is cut half a second later so it includes the follow-through.
-  if (camera.active) setTimeout(() => replay.show(camera.capture(features.durationMs + 800).clip), 500);
+  let handPathNow = null;
+  if (camera.active) setTimeout(() => {
+    const cut = camera.capture(features.durationMs + 800);
+    handPathNow = cut.path ?? null;
+    // Aim for the hand path of the player's best throw; before there is one, a smooth pendulum of the same swing.
+    const best = bestThrow(getHistory())?.handPath;
+    void replay.show(cut, cut.path ? { path: best ?? pendulumPath(cut.path), best: !!best } : null);
+  }, 500);
   twin.show(samples);
   const bestProfile = bestThrow(getHistory())?.profile ?? null;
 
@@ -98,7 +106,7 @@ async function onSwing({ samples, simulated = false }) {
   try { result = await game.throwBall(params); }
   finally { newGame.disabled = false; }
   const recent = getHistory().slice(-5).map(r => ({ source: 'sensor', features: r.features, result: r.result, params: r.params }));
-  if (!simulated) recordThrow({ features, profile, params, result, at: Date.now() }); // simulated throws stay out of the player's statistics
+  if (!simulated) recordThrow({ features, profile, params, result, at: Date.now(), ...(handPathNow && { handPath: handPathNow.map(([u, v]) => [+u.toFixed(2), +v.toFixed(2)]) }) }); // simulated throws stay out of the player's statistics
   lab.show({ features, profile, bestProfile, result });
   if (result.strike || result.spare) sendToPhone?.({ type: 'haptic', pattern: result.strike ? [220, 70, 220, 70, 320] : [150, 60, 150] });
   voice.notify({ type: 'throw', simulated, result, features, ballSpeed: params.speed, ...(seen.pose && { pose: seen.pose }) });
