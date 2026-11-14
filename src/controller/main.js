@@ -1,6 +1,4 @@
-import '@fontsource/m-plus-rounded-1c/latin-400.css';
-import '@fontsource/m-plus-rounded-1c/latin-700.css';
-import '@fontsource/m-plus-rounded-1c/latin-800.css';
+import '../fonts/geist.css';
 import { join } from '../net.js';
 import { createHaptics, validPattern } from './haptics.js';
 import { MAX_DURATION, MAX_SAMPLES, sampleFromEvent, validSwing } from './capture.js';

@@ -35,7 +35,7 @@ export function createSwingLab(root) {
     <div class="sl-card">
       <div class="sl-heading"><h3>Motion profile</h3><button type="button" data-replay disabled>Replay</button></div>
       <canvas class="sl-chart" role="img" aria-label="Swing and wrist rotation over normalized swing time. Throw a ball to see your profile."></canvas>
-      <div class="sl-legend"><span style="--line:#1878ba">Swing</span><span style="--line:#d63a2f">Wrist twist</span><span style="--line:#6b7b89">Best throw (dashed)</span></div>
+      <div class="sl-legend"><span style="--line:#0b7aa8">Swing</span><span style="--line:#b3392f">Wrist twist</span><span style="--line:#6b7b89">Best throw (dashed)</span></div>
       <p class="sl-muted" style="margin-top:10px" data-timing>Hold, swing, release. Your motion profile will appear here.</p>
     </div>
     <div class="sl-stats">
@@ -66,7 +66,7 @@ export function createSwingLab(root) {
     canvas.width = width * ratio;
     canvas.height = height * ratio;
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
-    context.fillStyle = '#f3faff';
+    context.fillStyle = '#fafcfd';
     context.fillRect(0, 0, width, height);
     const left = 31, right = width - 10, top = 16, bottom = height - 25;
     const series = [state?.profile?.swing, state?.profile?.twist, state?.bestProfile?.swing, state?.bestProfile?.twist];
@@ -74,9 +74,9 @@ export function createSwingLab(root) {
     const center = (top + bottom) / 2;
     const y = value => center - finite(value) / scale * (bottom - top) / 2;
     context.font = 'bold 10px "Courier New", monospace';
-    context.fillStyle = '#33485c';
+    context.fillStyle = '#66707b';
     for (const value of [-scale, 0, scale]) {
-      context.strokeStyle = '#cfe3f1';
+      context.strokeStyle = '#dbe6ec';
       context.lineWidth = 1;
       context.beginPath(); context.moveTo(left, y(value)); context.lineTo(right, y(value)); context.stroke();
       context.fillText(Math.round(value).toString(), 0, y(value) + 3);
@@ -85,7 +85,7 @@ export function createSwingLab(root) {
     context.fillText('Release', right - 36, height - 6);
     for (const [i, values] of series.entries()) {
       if (!values?.length) continue;
-      context.strokeStyle = i === 0 ? '#1878ba' : i === 1 ? '#d63a2f' : '#6b7b89';
+      context.strokeStyle = i === 0 ? '#0b7aa8' : i === 1 ? '#b3392f' : '#6b7b89';
       context.lineWidth = i < 2 ? 2 : 1.5;
       context.setLineDash(i < 2 ? [] : [4, 4]);
       context.globalAlpha = 1;
@@ -99,7 +99,7 @@ export function createSwingLab(root) {
     context.setLineDash([]);
     context.globalAlpha = 1;
     if (marker !== null) {
-      context.strokeStyle = '#ff9a1f'; context.lineWidth = 2;
+      context.strokeStyle = '#3f4852'; context.lineWidth = 2;
       const x = left + marker * (right - left);
       context.beginPath(); context.moveTo(x, top); context.lineTo(x, bottom); context.stroke();
     }

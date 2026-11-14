@@ -88,15 +88,15 @@ export function createGame(container) {
   targetLine.rotation.x = -Math.PI / 2; targetLine.position.set(0,.04,-8.5); target.add(targetLine);
 
   const hud = document.createElement('div');
-  hud.style.cssText = 'position:absolute;left:16px;right:16px;top:16px;z-index:2;pointer-events:none;color:#33485c;font-family:"M PLUS Rounded 1c","Segoe UI",system-ui,sans-serif;background:#ffffffee;border:2px solid #cfe3f1;border-radius:18px;overflow:hidden;box-shadow:0 4px 0 #c2dcee,0 10px 22px rgba(17,90,146,.15);';
-  hud.innerHTML = `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:8px 12px"><div style='font:700 12px "M PLUS Rounded 1c","Segoe UI",system-ui,sans-serif;letter-spacing:.06em;color:#115a92'>MOTIONPLAY BOWL · LANE 1 <span data-frame style="margin-left:8px;color:#5a6f82"></span></div><div style='font:700 12px "M PLUS Rounded 1c","Segoe UI",system-ui,sans-serif;color:#115a92'>TOTAL <span data-total style="font-size:22px;margin-left:8px"></span></div></div><div data-frames style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr)) minmax(0,1.5fr);border-top:2px solid #cfe3f1"></div>`;
+  hud.style.cssText = 'position:absolute;left:16px;right:16px;top:16px;z-index:2;pointer-events:none;color:#3f4852;font-family:Geist,"Segoe UI",system-ui,sans-serif;background:#fffffff2;border:1px solid #dbe6ec;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgb(40 55 70 / .04),0 14px 30px -20px rgb(40 55 70 / .22);';
+  hud.innerHTML = `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:8px 12px"><div style='font:500 11px Geist,"Segoe UI",system-ui,sans-serif;letter-spacing:.16em;color:#0b7aa8'>MOTIONPLAY BOWL · LANE 1 <span data-frame style="margin-left:10px;letter-spacing:0;color:#66707b"></span></div><div style='font:500 11px Geist,"Segoe UI",system-ui,sans-serif;letter-spacing:.16em;color:#0b7aa8'>TOTAL <span data-total style="font-size:26px;font-weight:300;letter-spacing:-.03em;color:#3f4852;margin-left:10px"></span></div></div><div data-frames style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr)) minmax(0,1.5fr);border-top:1px solid #dbe6ec"></div>`;
   container.append(hud);
   const status = document.createElement('div');
-  status.style.cssText = 'position:absolute;bottom:16px;left:16px;right:16px;z-index:2;color:#115a92;background:#ffffffee;border:2px solid #cfe3f1;border-radius:999px;box-shadow:0 4px 0 #c2dcee;padding:8px 16px;text-align:center;font:700 14px/1.5 "M PLUS Rounded 1c","Segoe UI",system-ui,sans-serif;pointer-events:none;';
+  status.style.cssText = 'position:absolute;bottom:16px;left:16px;right:16px;z-index:2;color:#3f4852;background:#fffffff2;border:1px solid #dbe6ec;border-radius:14px;box-shadow:0 14px 30px -20px rgb(40 55 70 / .22);padding:10px 16px;text-align:center;font:400 14px/1.5 Geist,"Segoe UI",system-ui,sans-serif;pointer-events:none;';
   status.setAttribute('aria-live','polite'); container.append(status);
   const celebration = document.createElement('div');
   celebration.setAttribute('aria-hidden', 'true');
-  celebration.style.cssText = 'position:absolute;inset:43% 0 auto;z-index:3;text-align:center;pointer-events:none;opacity:0;color:#ff9a1f;text-shadow:0 4px 0 #115a92,0 0 22px #ffffff;font:800 clamp(40px,7vw,96px)/1 "Arial Rounded MT Bold","M PLUS Rounded 1c","Segoe UI",system-ui,sans-serif;';
+  celebration.style.cssText = 'position:absolute;inset:43% 0 auto;z-index:3;text-align:center;pointer-events:none;opacity:0;color:#0b7aa8;text-shadow:0 0 28px #ffffff,0 0 6px #ffffff;letter-spacing:-.04em;font:300 clamp(48px,8vw,112px)/1 Geist,"Segoe UI",system-ui,sans-serif;';
   container.append(celebration);
   let score = new BowlingScore(), busy = false, disposed = false, drill = null;
   let activeThrow = null, raf, last = performance.now(), resultTimer = 0;
@@ -115,15 +115,15 @@ export function createGame(container) {
     const list = hud.querySelector('[data-frames]'); list.replaceChildren();
     score.frames.forEach((frame, i) => {
       const cell = document.createElement('div');
-      cell.style.cssText = `min-width:0;text-align:center;background:${i === score.frameIndex ? '#bfe6ff' : 'transparent'};border-left:${i ? '1px solid #cfe3f1' : '0'};font:700 12px "M PLUS Rounded 1c","Segoe UI",system-ui,sans-serif;`;
+      cell.style.cssText = `min-width:0;text-align:center;background:${i === score.frameIndex ? '#eaf6fb' : 'transparent'};border-left:${i ? '1px solid #dbe6ec' : '0'};font:400 12px Geist,"Segoe UI",system-ui,sans-serif;font-variant-numeric:tabular-nums;`;
       const number = document.createElement('div'); number.textContent = i + 1;
-      number.style.cssText = 'padding:2px 0;color:#5a6f82;font-size:10px;';
+      number.style.cssText = 'padding:3px 0;color:#66707b;font-size:10px;';
       if (i === score.frameIndex) cell.setAttribute('aria-current', 'step');
       const marks = document.createElement('div'); marks.textContent = frame.length ? frame.map((n, j) => n === 10 && (j === 0 || i === 9 && frame[j-1] === 10) ? 'X' : j > 0 && n + frame[j-1] === 10 && frame[j-1] !== 10 ? '/' : n === 0 ? '–' : n).join(' ') : '·';
-      marks.style.cssText = 'box-sizing:border-box;min-height:19px;padding:2px 0;white-space:nowrap;color:#33485c;';
+      marks.style.cssText = 'box-sizing:border-box;min-height:19px;padding:2px 0;white-space:nowrap;color:#3f4852;';
       // Darker red keeps small strike/spare marks at AA on paper and mustard.
       if (/[X/]/.test(marks.textContent)) marks.style.color = '#d63a2f';
-      const total = document.createElement('div'); total.textContent = score.totals[i] ?? '–'; total.style.cssText = 'font-size:14px;font-weight:700;padding:2px 0 4px;border-top:1px solid #e3eef6';
+      const total = document.createElement('div'); total.textContent = score.totals[i] ?? '–'; total.style.cssText = 'font-size:14px;font-weight:500;padding:3px 0 5px;border-top:1px solid #eef3f6';
       cell.append(number, marks, total); list.append(cell);
     });
   }

@@ -90,12 +90,12 @@ export function createTwin(root) {
   const add = (mesh, x, y, z, parent = scene) => { mesh.position.set(x, y, z); parent.add(mesh); return mesh; };
 
   // Floor with a strip showing which way the lane is (away from the viewer).
-  const floor = add(new THREE.Mesh(new THREE.CircleGeometry(1.7, 48), paint('#dcedf8', 0.9)), 0, 0, 0); floor.rotation.x = -Math.PI / 2;
-  const lane = add(new THREE.Mesh(new THREE.PlaneGeometry(0.5, 2.6), paint('#e9c98f', 0.6)), 0.24, 0.004, -0.5); lane.rotation.x = -Math.PI / 2;
-  const blob = add(new THREE.Mesh(new THREE.CircleGeometry(0.16, 24), new THREE.MeshBasicMaterial({ color: '#33485c', transparent: true, opacity: 0.22 })), 0, 0.008, 0); blob.rotation.x = -Math.PI / 2;
+  const floor = add(new THREE.Mesh(new THREE.CircleGeometry(1.7, 48), paint('#eef3f6', 0.9)), 0, 0, 0); floor.rotation.x = -Math.PI / 2;
+  const lane = add(new THREE.Mesh(new THREE.PlaneGeometry(0.5, 2.6), paint('#ead7b5', 0.6)), 0.24, 0.004, -0.5); lane.rotation.x = -Math.PI / 2;
+  const blob = add(new THREE.Mesh(new THREE.CircleGeometry(0.16, 24), new THREE.MeshBasicMaterial({ color: '#3f4852', transparent: true, opacity: 0.22 })), 0, 0.008, 0); blob.rotation.x = -Math.PI / 2;
 
   // A plain stand-in figure: head, body, legs, resting left arm.
-  const body = paint('#ffffff'), shirt = paint('#1f86cc');
+  const body = paint('#ffffff'), shirt = paint('#0b7aa8');
   add(new THREE.Mesh(new THREE.SphereGeometry(0.15, 24, 18), body), 0, 1.72, 0);
   add(new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.42, 8, 20), shirt), 0, 1.2, 0);
   for (const x of [-0.1, 0.1]) add(new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.62, 6, 14), body), x, 0.42, 0);
@@ -106,9 +106,9 @@ export function createTwin(root) {
   add(new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 12), shirt), 0, 0, 0, arm);
   add(new THREE.Mesh(new THREE.CapsuleGeometry(0.055, ARM - 0.12, 6, 14), body), 0, -ARM / 2, 0, arm);
   const phone = new THREE.Group(); phone.position.set(0, -ARM - 0.06, 0); arm.add(phone);
-  add(new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.33, 0.03), paint('#33485c', 0.4)), 0, 0, 0, phone);
-  add(new THREE.Mesh(new THREE.BoxGeometry(0.145, 0.29, 0.01), paint('#2aa7e6', 0.25)), 0, 0, 0.018, phone); // the bright face shows the twist
-  const trailMaterial = new THREE.MeshBasicMaterial({ color: '#ff9a1f' });
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.33, 0.03), paint('#3f4852', 0.4)), 0, 0, 0, phone);
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.145, 0.29, 0.01), paint('#7cc7e4', 0.25)), 0, 0, 0.018, phone); // the bright face shows the twist
+  const trailMaterial = new THREE.MeshBasicMaterial({ color: '#0b7aa8' });
   let trail = null, path = null, startedAt = 0, frame = null;
 
   function resize() {
