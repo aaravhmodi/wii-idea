@@ -14,6 +14,7 @@ const poll = (side, client) => fetch(`${base}/${side}?client=${client}`).then(as
 const send = (side, body) => fetch(`${base}/${side}`, { method: 'POST', body }).then(r => r.status);
 
 it('relays between one laptop and one phone', async () => {
+  expect(await poll('host', 'laptop')).toEqual([]); // first poll answers at once
   const waiting = poll('host', 'laptop'); // held open until something arrives
   expect(await send('phone', '{}')).toBe(404); // phone is not connected yet
 

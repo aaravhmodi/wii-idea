@@ -31,8 +31,9 @@ export function relay(req, res, next) {
   if (req.method === 'GET') {
     const client = new URLSearchParams(query).get('client') ?? '';
     let me = room[side];
+    const fresh = !me || me.client !== client;
     if (side === 'phone' && me && me.client !== client) { res.writeHead(409).end(); return true; } // single player: one phone per lane
-    if (!me || me.client !== client) {
+    if (fresh) {
       me = room[side] = { client, queue: [], waiter: null };
       rooms.set(id, room);
       if (room[other(side)]) { send(room[other(side)], { type: 'peer', online: true }); me.queue.push({ type: 'peer', online: true }); }
@@ -51,7 +52,7 @@ export function relay(req, res, next) {
         if (!room.host && !room.phone) rooms.delete(id);
       }, GONE);
     });
-    if (me.queue.length) flush(me);
+    if (fresh || me.queue.length) flush(me); // the first poll answers at once so the page knows it is connected
     return true;
   }
 
