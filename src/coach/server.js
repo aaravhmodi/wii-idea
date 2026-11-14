@@ -1,5 +1,5 @@
 // Server-only: never import this module from browser code.
-export const MAX_BODY_BYTES = 16 * 1024;
+export const MAX_BODY_BYTES = 256 * 1024; // three 320px JPEG frames of a swing fit in about 160 KB of base64
 export const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
 export async function readBody(request) {
   if (request.method !== 'POST') throw new Error('Use POST.');
@@ -18,7 +18,7 @@ export async function readBody(request) {
   }
   return JSON.parse(body + decoder.decode());
 }
-export async function generate(prompt, data, schema, validate) {
+export async function generate(prompt, data, schema, validate, frames = []) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('AI unavailable.');
   const models = [...new Set([process.env.GEMINI_MODEL || 'gemini-flash-latest', 'gemini-flash-lite-latest'])];
@@ -30,7 +30,7 @@ export async function generate(prompt, data, schema, validate) {
         headers: { 'Content-Type': 'application/json', 'X-goog-api-key': key },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: prompt }] },
-          contents: [{ role: 'user', parts: [{ text: JSON.stringify(data) }] }],
+          contents: [{ role: 'user', parts: [{ text: JSON.stringify(data) }, ...frames.map(data => ({ inlineData: { mimeType: 'image/jpeg', data } }))] }],
           generationConfig: { temperature: 0.35, maxOutputTokens: 1800, responseMimeType: 'application/json', responseJsonSchema: schema },
         }),
       });
@@ -38,7 +38,7 @@ export async function generate(prompt, data, schema, validate) {
       const body = await response.json();
       const content = body.candidates?.[0]?.content?.parts?.filter(p => !p.thought).map(p => p.text || '').join('');
       const result = JSON.parse(content);
-      if (validate(result)) return { ...result, source: 'gemini', model };
+      if (validate(result)) return { ...result, source: 'gemini', model, vision: frames.length > 0 };
     } catch { /* Timeout, network or malformed output: try the fallback model. */ }
   }
   throw new Error('AI unavailable.');

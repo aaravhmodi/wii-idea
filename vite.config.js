@@ -16,7 +16,7 @@ const devApi = {
         let size = 0;
         for await (const c of req) {
           size += c.length;
-          if (size > 16 * 1024) { res.statusCode = 400; return res.end('Body too large.'); }
+          if (size > 256 * 1024) { res.statusCode = 400; return res.end('Body too large.'); }
           chunks.push(c);
         }
         const handler = mod[req.method];

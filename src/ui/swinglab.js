@@ -46,6 +46,7 @@ export function createSwingLab(root) {
     <p class="sl-result" data-result aria-live="polite">Ready for your first throw</p>
     <div class="sl-card sl-coach" aria-live="polite">
       <div class="sl-heading"><h3 data-coach-title>Coach</h3><span class="sl-muted" data-consistency></span></div>
+      <p class="sl-muted" data-vision></p>
       <p data-insight>Your coach will review each throw.</p>
       <p class="sl-tip" data-tip>Try a comfortable, controlled swing and keep a firm grip on your phone.</p>
     </div>
@@ -143,6 +144,7 @@ export function createSwingLab(root) {
     },
     setCoach(reply) {
       find('coach-title').textContent = reply?.source === 'gemini' ? 'Gemini' : reply?.source === 'fallback' ? 'Local coaching' : 'Coach';
+      find('vision').textContent = reply?.vision === true ? 'Gemini looked at 3 frames + phone sensors' : '';
       find('insight').textContent = reply?.insight ?? 'Reviewing your throw…';
       find('tip').textContent = reply?.tip ?? 'Watch your motion profile while the coach prepares your next tip.';
       find('consistency').textContent = reply ? `Consistency ${Math.round(Math.max(0, Math.min(100, finite(reply.consistency))))}/100` : '';
@@ -155,6 +157,7 @@ export function createSwingLab(root) {
       find('timing').textContent = 'Hold, swing, release. Your motion profile will appear here.';
       find('result').textContent = 'Ready for your first throw';
       find('coach-title').textContent = 'Coach';
+      find('vision').textContent = '';
       find('consistency').textContent = '';
       find('insight').textContent = 'Your coach will review each throw.';
       find('tip').textContent = 'Try a comfortable, controlled swing and keep a firm grip on your phone.';

@@ -20,7 +20,7 @@ createServer(async (req, res) => {
       let size = 0;
       for await (const chunk of req) {
         size += chunk.length;
-        if (size > 16 * 1024) return res.writeHead(400).end();
+        if (size > 256 * 1024) return res.writeHead(400).end();
         chunks.push(chunk);
       }
       const reply = await coach(new Request('http://localhost/api/coach', { method: 'POST', headers: req.headers, body: Buffer.concat(chunks) }));
