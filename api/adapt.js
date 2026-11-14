@@ -12,17 +12,19 @@ const featureKeys = ['durationMs', 'peakAccel', 'peakRot', 'twistDeg', 'twistTim
 export async function POST(request) {
   let data;
   try {
-    const { samples, pins, trends, request: wish } = await readBody(request) ?? {};
+    const { samples, pins, trends, sources, request: wish } = await readBody(request) ?? {};
     if (!Array.isArray(samples) || samples.length < 1 || samples.length > 10 || !samples.every(validFeatures)) throw new Error('Invalid samples.');
     if (pins !== undefined && (!Array.isArray(pins) || pins.length !== samples.length || !pins.every(p => Number.isInteger(p) && p >= 0 && p <= 10))) throw new Error('Invalid pins.');
     if (wish !== undefined && (typeof wish !== 'string' || wish.length > 300)) throw new Error('Invalid request.');
+    if (sources !== undefined && (!Array.isArray(sources) || sources.length !== samples.length || !sources.every(source => ['sensor', 'simulation'].includes(source)))) throw new Error('Invalid sources.');
     if (trends !== undefined && (!trends || typeof trends !== 'object' || Array.isArray(trends) || Object.keys(trends).length > 12
       || !Object.values(trends).every(value => finite(value, -1e6, 1e6)))) throw new Error('Invalid trends.');
     data = {
       samples: samples.map(f => Object.fromEntries(featureKeys.map(key => [key, f[key]]))),
       pins: pins ?? [], trends: trends ?? {}, request: (wish ?? '').trim(),
+      ...(sources ? { sources } : {}),
     };
   } catch { return json({ error: 'Expected 1 to 10 valid motion samples, optional pins, trends and a request of at most 300 characters.' }, 400); }
-  try { return json(await generate(prompt, data, adaptationSchema, validAdaptation)); }
+  try { return json(await generate(`${prompt} Samples may have explicit sources: sensor or simulation. Treat simulation samples as synthetic; never claim they measured the player's movement. Guided calibration samples have no pinfall yet: do not invent results. Return a recommendation for preview; controls have not been applied.`, data, adaptationSchema, validAdaptation)); }
   catch { return json(fallbackAdaptation(data)); }
 }
