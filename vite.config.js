@@ -10,7 +10,7 @@ const devApi = {
     server.middlewares.use('/api', async (req, res) => {
       try {
         const name = req.url.split('?')[0].slice(1);
-        if (name !== 'coach') { res.statusCode = 404; return res.end(); }
+        if (!['coach', 'adapt'].includes(name)) { res.statusCode = 404; return res.end(); }
         const mod = await server.ssrLoadModule(`/api/${name}.js`);
         const chunks = [];
         let size = 0;

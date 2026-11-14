@@ -1,5 +1,5 @@
 import { HISTORY_MAX } from '../shared/contract.js';
-import { fallbackCoach, validCoach, validFeatures, validResult } from './schema.js';
+import { fallbackAdaptation, validAdaptation, fallbackCoach, validCoach, validFeatures, validResult } from './schema.js';
 
 const HISTORY_KEY = 'motionplay.throws.v1';
 let memory = [];
@@ -57,4 +57,15 @@ export async function getCoaching(data) {
     if (!validCoach(reply)) throw new Error('Invalid coach reply.');
     return reply;
   } catch { return fallbackCoach(data); }
+}
+
+export async function getAdaptation(data) {
+  try {
+    const response = await fetch('/api/adapt', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data), signal: AbortSignal.timeout(26000) });
+    if (!response.ok) throw new Error('Adaptation unavailable.');
+    const reply = await response.json();
+    if (!validAdaptation(reply)) throw new Error('Invalid adaptation.');
+    return reply;
+  } catch { return fallbackAdaptation(data); }
 }

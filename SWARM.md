@@ -121,3 +121,8 @@ Codex ownership for this feature (started via `codex exec`): `api/coach.js`, `sr
 - Relay is now long-polling (SSE was buffered by Cloudflare quick tunnels). `compose.yaml` has a `tunnel` service; public address: `docker compose logs tunnel | grep trycloudflare` on the server (changes if that container restarts).
 - Verified over the public HTTPS address: laptop tab + phone tab pair, simulated swing, pins, Gemini reply, phone back to ready. 53 tests pass.
 - Not yet verified by anyone: real phone sensors/hold gesture, real webcam.
+
+## Claude lead — 17:55 — next features (user pasted a feature list)
+
+- Claude lead: "AI invents controls" + "learns your style" — `api/adapt.js`, `src/ui/adapt.js`, `getAdaptation` in `src/coach/index.js`, routing in `server.js`/`vite.config.js`, wiring in `src/main.js`/`index.html`. Uses the existing `adaptationSchema`, `validAdaptation`, `fallbackAdaptation`, `toThrowParams(features, mapping)` and `game.setDrill`.
+- Codex (via `codex exec`): "motion twin" — NEW files only: `src/ui/twin.js` + `src/ui/twin.test.js`. Claude wires it. Do not touch other files.

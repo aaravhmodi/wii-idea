@@ -2,9 +2,10 @@ import { host } from './net.js';
 import { drawQR } from './controller/qr.js';
 import { createGame } from './game/index.js';
 import { extractFeatures, toProfile } from './motion/features.js';
-import { toThrowParams } from './motion/mapping.js';
+import { DEFAULT_MAPPING, toThrowParams, validateMapping } from './motion/mapping.js';
+import { createAdapt } from './ui/adapt.js';
 import { createSwingLab } from './ui/swinglab.js';
-import { getCoaching, getHistory, recordThrow, bestThrow, trends } from './coach/index.js';
+import { getAdaptation, getCoaching, getHistory, recordThrow, bestThrow, trends } from './coach/index.js';
 import { validSwing } from './controller/capture.js';
 import { createCamera } from './camera/index.js';
 import { createReplay } from './camera/replay.js';
@@ -16,6 +17,30 @@ const replay = createReplay(document.getElementById('replay'));
 const status = document.getElementById('status');
 let throwNo = 0;
 
+// Control mapping chosen by Gemini for this player; kept across reloads.
+const MAPPING_KEY = 'motionplay.mapping.v1';
+let mapping = DEFAULT_MAPPING;
+try { mapping = validateMapping(JSON.parse(localStorage.getItem(MAPPING_KEY))); } catch { /* none saved, or an old format */ }
+createAdapt(document.getElementById('adapt'), {
+  async adapt(request) {
+    const history = getHistory();
+    if (!history.length) throw new Error('Make at least one throw first. Any comfortable movement counts.');
+    if (game.busy) throw new Error('Wait for the ball to stop, then try again.');
+    const recent = history.slice(-5);
+    const adaptation = await getAdaptation({ samples: recent.map(r => r.features), pins: recent.map(r => r.result.pinsDown), trends: trends(history), request });
+    mapping = validateMapping(adaptation.mapping);
+    try { localStorage.setItem(MAPPING_KEY, JSON.stringify(mapping)); } catch { /* still applies for this session */ }
+    if (!game.busy) game.setDrill(adaptation.drill);
+    return adaptation;
+  },
+  reset() {
+    if (game.busy) throw new Error('Wait for the ball to stop, then try again.');
+    mapping = DEFAULT_MAPPING;
+    try { localStorage.removeItem(MAPPING_KEY); } catch { /* nothing stored */ }
+    game.setDrill(null);
+  },
+});
+
 async function onSwing({ samples }) {
   if (!validSwing({ type: 'swing', samples })) throw new Error('Invalid motion recording.');
   if (game.busy) return;
@@ -23,7 +48,7 @@ async function onSwing({ samples }) {
   const mine = ++throwNo;
   const features = extractFeatures(samples);
   const profile = toProfile(samples);
-  const params = toThrowParams(features);
+  const params = toThrowParams(features, mapping);
   // The message arrives right after release, so the last durationMs (+ relay delay margin) of camera buffer is the swing.
   const seen = camera.active ? camera.capture(features.durationMs + 300) : { frames: [], pose: null };
   replay.show(seen.clip);

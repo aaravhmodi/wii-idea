@@ -5,6 +5,9 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { relay } from './server/relay.js';
 import { POST as coach } from './api/coach.js';
+import { POST as adapt } from './api/adapt.js';
+
+const api = { '/api/coach': coach, '/api/adapt': adapt };
 
 const dist = resolve('dist');
 const port = process.env.PORT || 8080;
@@ -14,7 +17,7 @@ createServer(async (req, res) => {
   try {
     if (relay(req, res)) return;
     const path = req.url.split('?')[0];
-    if (path === '/api/coach') {
+    if (Object.hasOwn(api, path)) {
       if (req.method !== 'POST') return res.writeHead(405).end();
       const chunks = [];
       let size = 0;
@@ -23,7 +26,7 @@ createServer(async (req, res) => {
         if (size > 256 * 1024) return res.writeHead(400).end();
         chunks.push(chunk);
       }
-      const reply = await coach(new Request('http://localhost/api/coach', { method: 'POST', headers: req.headers, body: Buffer.concat(chunks) }));
+      const reply = await api[path](new Request(`http://localhost${path}`, { method: 'POST', headers: req.headers, body: Buffer.concat(chunks) }));
       res.writeHead(reply.status, Object.fromEntries(reply.headers));
       return res.end(await reply.text());
     }
