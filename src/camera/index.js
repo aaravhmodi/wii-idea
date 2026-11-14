@@ -39,7 +39,7 @@ function cameraError(e) {
   const name = e?.name;
   if (name === 'NotAllowedError' || name === 'SecurityError') return 'Camera permission was denied. Allow the camera for this page and try again.';
   if (name === 'NotFoundError' || name === 'OverconstrainedError') return 'No camera was found on this laptop.';
-  if (name === 'NotReadableError' || name === 'AbortError') return 'The camera is in use by another app.';
+  if (name === 'NotReadableError' || name === 'AbortError') return `The camera would not start (${e.message || name}). Check that its privacy shutter or camera-off key is not on, close other apps and tabs that use the camera, then try again.`;
   return `Could not open the camera: ${e?.message ?? e}`;
 }
 
@@ -100,6 +100,7 @@ export function createCamera(container) {
       status.textContent = 'Asking for the camera…';
       const s = await navigator.mediaDevices
         .getUserMedia({ audio: false, video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } })
+        .catch(e => (e?.name === 'NotAllowedError' ? Promise.reject(e) : navigator.mediaDevices.getUserMedia({ video: true }))) // some drivers refuse the preferred size
         .catch(e => { throw new Error(cameraError(e)); });
       if (mine !== run) { s.getTracks().forEach(t => t.stop()); return; }
       stream = s;
