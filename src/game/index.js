@@ -102,7 +102,7 @@ export function createGame(container) {
   let activeThrow = null, raf, last = performance.now(), resultTimer = 0;
   const cameraHome = new THREE.Vector3(0, 8.6, 17.2), cameraGoal = cameraHome.clone();
   const lookAt = new THREE.Vector3(0, 0, -3.4), lookGoal = lookAt.clone();
-  let onImpact = null;
+  let onImpact = null, aimDeg = null, aimSign = 0, aimNow = 0;
   const impact = event => {
     if (!activeThrow) return;
     const strength = Math.abs(event.contact.getImpactVelocityAlongNormal());
@@ -152,6 +152,9 @@ export function createGame(container) {
     }
     physics.pins.forEach((pin,i) => { pinMeshes[i].visible = pin.active; pinMeshes[i].position.copy(pin.body.position); pinMeshes[i].quaternion.copy(pin.body.quaternion); });
     ballMesh.position.copy(physics.ball.position); ballMesh.quaternion.copy(physics.ball.quaternion);
+    // Before release the ball swings with the phone: back and up on the backswing, forward on the way through.
+    aimNow += ((activeThrow || aimDeg === null ? 0 : aimDeg) - aimNow) * (activeThrow ? 1 : 0.3);
+    if (Math.abs(aimNow) > 0.5) { const a = aimNow * Math.PI / 180; ballMesh.position.z += Math.sin(a) * 1.6; ballMesh.position.y += (1 - Math.cos(a)) * 1.6; }
     renderer.render(scene, camera); raf = requestAnimationFrame(render);
   }
   function resize() {
@@ -162,6 +165,13 @@ export function createGame(container) {
   return {
     get busy() { return busy; },
     set onImpact(listener) { onImpact = listener; },
+    /** Swing angle of the phone in degrees while it is held, or null when the hold ends. */
+    aim(deg) {
+      if (!Number.isFinite(deg)) { aimDeg = null; aimSign = 0; return; }
+      // A gyro cannot tell back from forward on its own; whichever way the swing goes first is the backswing.
+      if (!aimSign && Math.abs(deg) > 12) aimSign = Math.sign(deg);
+      aimDeg = Math.max(-110, Math.min(110, aimSign ? deg * aimSign : Math.abs(deg)));
+    },
     get score() { return { frames: score.frames.map(f => [...f]), totals: score.totals, total: score.total, frame: score.frame, roll: score.roll, complete: score.complete }; },
     throwBall(params) {
       if (disposed || busy || score.complete) return Promise.reject(new Error(disposed ? 'Game closed.' : busy ? 'A ball is already rolling.' : 'Game complete. Start a new game.'));

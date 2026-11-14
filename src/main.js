@@ -81,6 +81,7 @@ async function onSwing({ samples, simulated = false }) {
   if (simulated) mixedGame = true;
   const mine = ++throwNo;
   buzzed = false;
+  game.aim?.(null);
   const features = extractFeatures(samples);
   const profile = toProfile(samples);
   const params = toThrowParams(features, mapping);
@@ -151,8 +152,15 @@ for (const tab of tabs) tab.addEventListener('click', () => {
 
 // Same entry point the phone uses; lets fixtures drive the full loop without a phone.
 window.__swing = onSwing;
+window.__aim = degrees => game.aim(degrees); // same hook the phone's live swing angle drives
 
-host(onSwing, (text) => { status.textContent = text; })
+let aimTimer;
+host(onSwing, (text) => { status.textContent = text; }, swing => {
+  if (game.busy) return;
+  game.aim(typeof swing === 'number' ? swing : null);
+  clearTimeout(aimTimer);
+  aimTimer = setTimeout(() => game.aim(null), 1200); // the phone went quiet: put the ball back
+})
   .then(({ url, send }) => {
     sendToPhone = send;
     drawQR(document.getElementById('qr'), url).catch(() => { status.textContent = 'QR unavailable. Open the pairing link on your phone.'; });

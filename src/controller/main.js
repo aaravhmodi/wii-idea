@@ -14,7 +14,9 @@ const armed = () => permitted && !!link?.ready;
 function sync() { hold.disabled = !armed(); document.documentElement.classList.toggle('armed', armed()); }
 // The lock is dropped whenever the page is hidden, so this is re-run on return.
 function wake() { if (permitted) navigator.wakeLock?.request('screen').catch(() => {}); }
+let liveSwing = 0, liveSentAt = 0;
 function cancel(message) {
+  if (recording) link?.live?.(null); // the ball on the laptop returns to rest
   recording = false;
   clearTimeout(timer);
   samples = [];
@@ -61,7 +63,10 @@ window.addEventListener('devicemotion', event => {
   if (!sample) return;
   clearTimeout(sensorTimer);
   if (!recording || t > MAX_DURATION || samples.length >= MAX_SAMPLES || (samples.length && t <= samples.at(-1).t)) return;
+  // Live swing angle (degrees, integrated from the gyro) so the ball on the laptop follows the phone before release.
+  if (samples.length) liveSwing += (samples.at(-1).rx + sample.rx) * (t - samples.at(-1).t) / 2000;
   samples.push(sample);
+  if (t - liveSentAt >= 80) { liveSentAt = t; link?.live?.(liveSwing); }
   meter.style.width = `${Math.min(100, t / MAX_DURATION * 100)}%`;
 });
 
@@ -71,6 +76,7 @@ function begin(id, event) {
   event.preventDefault();
   holder = id;
   samples = [];
+  liveSwing = 0; liveSentAt = 0;
   start = performance.now();
   recording = true;
   hold.classList.add('recording');

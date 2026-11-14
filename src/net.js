@@ -31,13 +31,14 @@ function listen(room, side, client, onMessage, onState) {
   return { stop() { stopped = true; abort?.abort(); }, get open() { return state === 'open'; } };
 }
 
-export function host(onSwing, onStatus = () => {}) {
+export function host(onSwing, onStatus = () => {}, onLive = () => {}) {
   return new Promise((resolve, reject) => {
     const room = randomId(), client = randomId();
     let processing = false, opened = false;
     const say = (state, text) => post(room, 'host', client, { type: 'status', state, text }).catch(() => {}); // phone may have just left
     const timeout = setTimeout(() => { if (!opened) { link.stop(); reject(new Error('Pairing server did not respond. Reload to retry.')); } }, 30000);
     const link = listen(room, 'host', client, async data => {
+      if (data?.type === 'live') return onLive(data.swing); // the phone's swing angle while the screen is held
       if (data?.type === 'hello') return say(processing ? 'busy' : 'ready', processing ? 'Finishing the previous throw…' : 'Connected. Ready when you are.');
       if (data?.type === 'peer') {
         onStatus(data.online ? 'Phone connected' : 'Phone disconnected · reconnect on your phone');
@@ -67,7 +68,7 @@ export function host(onSwing, onStatus = () => {}) {
 export function join(room, onStatus = () => {}, onEvent = () => {}) {
   if (typeof room !== 'string' || !/^[\w-]{8,64}$/.test(room)) throw new Error('Open the QR code from the laptop to pair.');
   const client = randomId(); // kept across reconnects so the relay knows it is the same phone
-  let link, closed = false, ready = false;
+  let link, closed = false, ready = false, liveBusy = false;
   const update = (state, text) => { ready = state === 'ready'; onStatus({ state, text }); };
   const connect = () => {
     if (closed) return;
@@ -95,6 +96,12 @@ export function join(room, onStatus = () => {}, onEvent = () => {}) {
       update('busy', 'Sending your throw…');
       post(room, 'phone', client, message).then(r => { if (!r.ok) throw 0; }).catch(() => update('disconnected', 'Throw did not reach the laptop. Tap Reconnect.'));
       return true;
+    },
+    /** Swing angle in degrees while holding, or null when the hold ends. Updates are dropped while one is still in flight. */
+    live(swing) {
+      if (!link?.open || (liveBusy && swing !== null)) return;
+      liveBusy = true;
+      post(room, 'phone', client, { type: 'live', swing }).catch(() => {}).finally(() => { liveBusy = false; });
     },
     reconnect() { if (closed) return; link?.stop(); connect(); },
     close() { closed = true; ready = false; link?.stop(); },

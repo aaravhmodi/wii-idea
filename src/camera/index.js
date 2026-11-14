@@ -35,6 +35,21 @@ async function loadLandmarker() {
   return make('GPU').catch(() => make('CPU'));
 }
 
+// Laptops with face unlock expose an infrared camera too, and the browser's default pick can be one that
+// will not start. Try the preferred settings, then every camera in turn, ordinary ones before infrared.
+async function openCamera() {
+  const media = navigator.mediaDevices;
+  let error;
+  try { return await media.getUserMedia({ audio: false, video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } }); }
+  catch (e) { if (e?.name === 'NotAllowedError' || e?.name === 'SecurityError') throw e; error = e; }
+  const infrared = camera => /IR|infrared/i.test(camera.label);
+  const cameras = (await media.enumerateDevices()).filter(device => device.kind === 'videoinput').sort((a, b) => infrared(a) - infrared(b));
+  for (const camera of cameras) {
+    try { return await media.getUserMedia({ audio: false, video: { deviceId: { exact: camera.deviceId } } }); } catch (e) { error = e; }
+  }
+  throw error;
+}
+
 function cameraError(e) {
   const name = e?.name;
   if (name === 'NotAllowedError' || name === 'SecurityError') return 'Camera permission was denied. Allow the camera for this page and try again.';
@@ -98,10 +113,7 @@ export function createCamera(container) {
     try {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('This browser cannot use a camera here (it needs https or localhost).');
       status.textContent = 'Asking for the camera…';
-      const s = await navigator.mediaDevices
-        .getUserMedia({ audio: false, video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } })
-        .catch(e => (e?.name === 'NotAllowedError' ? Promise.reject(e) : navigator.mediaDevices.getUserMedia({ video: true }))) // some drivers refuse the preferred size
-        .catch(e => { throw new Error(cameraError(e)); });
+      const s = await openCamera().catch(e => { throw new Error(cameraError(e)); });
       if (mine !== run) { s.getTracks().forEach(t => t.stop()); return; }
       stream = s;
       status.textContent = 'Loading body tracking…';
