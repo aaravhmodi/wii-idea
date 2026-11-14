@@ -10,37 +10,27 @@ beforeAll(async () => {
 });
 afterAll(() => { server.closeAllConnections(); server.close(); });
 
-// Reads SSE `data:` messages from a stream one at a time.
-async function listen(side) {
-  const response = await fetch(`${base}/${side}`);
-  const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
-  let buffer = '';
-  return { status: response.status, close: () => reader.cancel(), async next() {
-    for (;;) {
-      const match = /data: (.*)\n\n/.exec(buffer);
-      if (match) { buffer = buffer.slice(match.index + match[0].length); return JSON.parse(match[1]); }
-      buffer += (await reader.read()).value ?? '';
-    }
-  } };
-}
-const send = (side, body) => fetch(`${base}/${side}`, { method: 'POST', body });
+const poll = (side, client) => fetch(`${base}/${side}?client=${client}`).then(async r => (r.ok ? r.json() : r.status));
+const send = (side, body) => fetch(`${base}/${side}`, { method: 'POST', body }).then(r => r.status);
 
 it('relays between one laptop and one phone', async () => {
-  const laptop = await listen('host');
-  expect((await send('phone', '{}')).status).toBe(404); // phone is not connected yet
-  const phone = await listen('phone');
-  expect(await laptop.next()).toEqual({ type: 'peer', online: true });
-  expect(await phone.next()).toEqual({ type: 'peer', online: true });
+  const waiting = poll('host', 'laptop'); // held open until something arrives
+  expect(await send('phone', '{}')).toBe(404); // phone is not connected yet
 
-  expect((await listen('phone')).status).toBe(409); // single player
-  expect((await send('phone', JSON.stringify({ type: 'swing', samples: [] }))).status).toBe(204);
-  expect(await laptop.next()).toEqual({ type: 'swing', samples: [] });
-  expect((await send('host', JSON.stringify({ type: 'status', state: 'ready', text: 'go' }))).status).toBe(204);
-  expect(await phone.next()).toEqual({ type: 'status', state: 'ready', text: 'go' });
+  const phoneFirst = await poll('phone', 'phone-a'); // joining answers at once with the laptop's presence
+  expect(phoneFirst).toEqual([{ type: 'peer', online: true }]);
+  expect(await waiting).toEqual([{ type: 'peer', online: true }]);
+  expect(await poll('phone', 'phone-b')).toBe(409); // single player
 
-  expect((await send('phone', 'not json')).status).toBe(400);
-  expect((await send('phone', JSON.stringify('x'.repeat(200000)))).status).toBe(413);
-  await phone.close();
-  expect(await laptop.next()).toEqual({ type: 'peer', online: false });
-  await laptop.close();
+  const hostWaiting = poll('host', 'laptop');
+  expect(await send('phone', JSON.stringify({ type: 'swing', samples: [] }))).toBe(204);
+  expect(await hostWaiting).toEqual([{ type: 'swing', samples: [] }]);
+
+  // Messages sent while the phone is between polls are queued, in order.
+  expect(await send('host', JSON.stringify({ type: 'status', text: 'one' }))).toBe(204);
+  expect(await send('host', JSON.stringify({ type: 'status', text: 'two' }))).toBe(204);
+  expect(await poll('phone', 'phone-a')).toEqual([{ type: 'status', text: 'one' }, { type: 'status', text: 'two' }]);
+
+  expect(await send('phone', 'not json')).toBe(400);
+  expect(await send('phone', JSON.stringify('x'.repeat(200000)))).toBe(413);
 });

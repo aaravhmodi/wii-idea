@@ -1,6 +1,6 @@
 # Home server: game, Gemini coach and phone relay in one container, published on the
 # Tailscale address. Set TAILSCALE_IP and GEMINI_API_KEY in .env (never committed).
-# Public HTTPS comes from Tailscale Funnel in front of port 8099.
+# Public HTTPS comes from the Cloudflare quick tunnel below.
 services:
   web:
     build: .
@@ -8,3 +8,13 @@ services:
     env_file: .env
     ports:
       - "${TAILSCALE_IP}:8099:8080"
+
+  # Public HTTPS without a domain or sudo. Find the address with:
+  #   docker compose logs tunnel | grep trycloudflare
+  # shortcut: the address changes whenever this container restarts; switch to Tailscale
+  # Funnel (sudo tailscale funnel --bg --https=10000 http://100.76.57.23:8099) for a fixed one.
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://web:8080
+    depends_on: [web]

@@ -12,7 +12,7 @@ Hardware volume buttons are not reliably exposed by mobile browsers. Hold anywhe
 
 Use Node.js 22.12+ or 24. Install with `npm install`, then run `npm run dev`. Put `GEMINI_API_KEY=your-key` in git-ignored `.env.local`. Run `npm test` and `npm run build` to verify changes. `node scripts/verify-coach.mjs` makes one real Gemini check with synthetic measurements and reports whether Gemini answered.
 
-Phone motion needs HTTPS. Use the deployed URL for real phone testing; ordinary HTTP over your Wi-Fi IP will not enable mobile motion sensors. The phone and laptop talk through a small HTTP relay on the server (`server/relay.js`), so they do not need to be on the same network.
+Phone motion needs HTTPS. Use the deployed URL for real phone testing; ordinary HTTP over your Wi-Fi IP will not enable mobile motion sensors. The phone and laptop talk through a small HTTP long-polling relay on the server (`server/relay.js`), so they do not need to be on the same network.
 
 The last twenty throws remain in the laptop browser's local storage. Swing Lab shows measured angular velocities over normalized time, not a reconstructed 3D arm path. Coaching falls back to a labeled local response if Gemini is unavailable.
 
@@ -26,7 +26,7 @@ npm run build
 GEMINI_API_KEY=your-key PORT=8080 npm start
 ```
 
-`npm start` serves the built site, `/api/coach` and `/relay` from one port (Node 22.12+; it also reads `.env.local` if present). Put HTTPS in front of it (Caddy, nginx or a tunnel): phones only expose motion sensors on HTTPS. If the proxy buffers responses, turn buffering off for `/relay/`.
+`npm start` serves the built site, `/api/coach` and `/relay` from one port (Node 22.12+; it also reads `.env.local` if present). Put HTTPS in front of it (Caddy, nginx or a tunnel): phones only expose motion sensors on HTTPS.
 
 ## Deployment (Vercel, coaching only)
 
