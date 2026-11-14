@@ -25,7 +25,7 @@ const api = { '/api/coach': coach, '/api/adapt': adapt, '/api/live-token': liveT
 
 const dist = resolve('dist');
 const port = process.env.PORT || 8080;
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff' };
 
 createServer(async (req, res) => {
   try {

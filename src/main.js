@@ -1,3 +1,6 @@
+import '@fontsource/m-plus-rounded-1c/latin-400.css';
+import '@fontsource/m-plus-rounded-1c/latin-700.css';
+import '@fontsource/m-plus-rounded-1c/latin-800.css';
 import { host } from './net.js';
 import { drawQR } from './controller/qr.js';
 import { createGame } from './game/index.js';
