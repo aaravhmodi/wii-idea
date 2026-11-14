@@ -29,7 +29,7 @@ export function createPlan(root, request) {
   </div>`;
   const find = name => root.querySelector(`[data-${name}]`);
   const button = root.querySelector('button');
-  let state = load();
+  let state = load(), run = 0;
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* shown for this session only */ } };
   function draw() {
     const plan = state.plan;
@@ -45,7 +45,10 @@ export function createPlan(root, request) {
     find('status').textContent = 'Gemini is writing your plan…';
     try {
       const previous = state.plan ? [state.plan.focus, ...state.plan.steps].join(' ').slice(0, 1200) : '';
-      state.plan = await request({ games: state.games, previous });
+      const mine = ++run;
+      const written = await request({ games: state.games, previous });
+      if (mine !== run) return; // a newer request is on its way
+      state.plan = written;
       save();
     } catch (error) { find('status').textContent = error.message || 'Could not write a plan. Try again.'; button.disabled = false; return; }
     button.disabled = false;

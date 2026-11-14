@@ -94,6 +94,7 @@ export function createVoiceCoach(root, actions) {
     if (content?.turnComplete) { heard = ''; said = ''; }
     const calls = message.toolCall?.functionCalls;
     if (calls?.length && session) {
+      const asked = session;
       const functionResponses = await Promise.all(calls.map(async call => {
         let response;
         try {
@@ -102,7 +103,7 @@ export function createVoiceCoach(root, actions) {
         } catch (error) { response = { error: String(error.message || error).slice(0, 200) }; }
         return { id: call.id, name: call.name, response };
       }));
-      session?.sendToolResponse({ functionResponses });
+      if (session === asked) asked.sendToolResponse({ functionResponses }); // the coach may have been restarted meanwhile
     }
   }
 

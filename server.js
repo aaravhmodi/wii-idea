@@ -9,14 +9,16 @@ import { POST as adapt } from './api/adapt.js';
 import { POST as liveToken } from './api/live-token.js';
 import { POST as plan } from './api/plan.js';
 
-// Each visitor may make 40 API calls a minute; these endpoints spend the Gemini key.
+// These endpoints spend the Gemini key, so calls are capped per minute per connecting address.
+// shortcut: behind the tunnel or Funnel every visitor shares the proxy's address, so this is in effect one
+// site-wide cap; key by a proxy-verified client IP if the site ever needs per-visitor limits.
 const calls = new Map();
 setInterval(() => calls.clear(), 60000).unref();
 function limited(req) {
-  const ip = req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '';
+  const ip = req.socket.remoteAddress || '';
   const count = (calls.get(ip) ?? 0) + 1;
   calls.set(ip, count);
-  return count > 40;
+  return count > 120;
 }
 
 const api = { '/api/coach': coach, '/api/adapt': adapt, '/api/live-token': liveToken, '/api/plan': plan };

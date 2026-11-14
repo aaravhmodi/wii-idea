@@ -4,7 +4,7 @@ Phone-controlled, single-player 3D bowling with Gemini coaching and a measured m
 
 ## Play
 
-Open https://motionplay-ai.vercel.app on your laptop. Scan its QR code with your phone, tap **Enable motion**, and allow the sensor prompt. Hold anywhere on the phone screen, make a comfortable swing while keeping a firm grip, then release to bowl. Watch the laptop for the result, motion profile and coaching. A game has ten frames; use **New game** or swing again after completion to restart.
+Open https://aaravdagoat.tail732914.ts.net:10000 on your laptop (served from the home server through Tailscale Funnel; the Vercel site cannot run the pairing relay). Scan its QR code with your phone, tap **Enable motion**, and allow the sensor prompt. Hold anywhere on the phone screen, make a comfortable swing while keeping a firm grip, then release to bowl. Watch the laptop for the result, motion profile and coaching. A game has ten frames; use **New game** or swing again after completion to restart.
 
 Hardware volume buttons are not reliably exposed by mobile browsers. Hold anywhere on the touchscreen is the supported control; volume-key handling works only if your browser delivers those events.
 

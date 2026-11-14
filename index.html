@@ -7,44 +7,88 @@
   <style>
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
-    body { display: grid; grid-template-columns: 1fr 380px; background: #f2e8d5; color: #1b2238; font: 15px/1.45 Georgia, serif; }
+    body { display: grid; grid-template-columns: minmax(0, 1fr) clamp(360px, 32vw, 440px); background: #f2e8d5; color: #1b2238; font: 16px/1.5 Georgia, serif; }
     #game { position: relative; min-width: 0; height: 100vh; }
-    aside { height: 100vh; overflow-y: auto; padding: 18px; border-left: 4px solid #1b2238; display: flex; flex-direction: column; gap: 16px; }
-    h1 { font: 400 34px/1 Impact, "Arial Narrow Bold", Haettenschweiler, sans-serif; text-transform: uppercase; margin: 0; padding-bottom: 8px; border-bottom: 4px double #1b2238; }
-    h1 span { color: #d23b2a; }
-    #pair { display: flex; gap: 12px; align-items: center; border: 2px solid #1b2238; background: #fffaf0; padding: 10px; }
-    #qr { width: 112px; height: 112px; border: 2px solid #1b2238; background: #fff; flex: none; }
-    #status { font: 700 14px "Courier New", ui-monospace, monospace; color: #d23b2a; margin-bottom: 4px; }
-    #newgame { align-self: start; border: 2px solid #1b2238; background: #e0a526; color: #1b2238; padding: 8px 16px; cursor: pointer;
-      font: 400 18px Impact, "Arial Narrow Bold", Haettenschweiler, sans-serif; text-transform: uppercase; box-shadow: 4px 4px 0 #1b2238; }
-    #newgame:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #1b2238; }
-    #newgame:disabled { opacity: .5; box-shadow: none; }
-    #newgame:focus-visible { outline: 3px solid #d23b2a; outline-offset: 3px; }
-    #simulate { border: 2px solid #1b2238; background: #f2e8d5; color: #1b2238; padding: 8px 12px; cursor: pointer; font: 700 12px "Courier New", ui-monospace, monospace; }
-    #simulate:focus-visible { outline: 3px solid #d23b2a; outline-offset: 3px; }
-    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    #tabs { display: grid; grid-template-columns: repeat(3, 1fr); border: 2px solid #1b2238; }
-    #tabs button { border: 0; background: #f2e8d5; color: #1b2238; padding: 8px 4px; cursor: pointer; font: 400 18px Impact, "Arial Narrow Bold", Haettenschweiler, sans-serif; text-transform: uppercase; }
+    aside { height: 100vh; height: 100dvh; min-width: 0; overflow-y: auto; padding: 24px; border-left: 2px solid #1b2238; display: flex; flex-direction: column; gap: 20px; scroll-padding-top: 80px; }
+    aside > * { flex-shrink: 0; }
+    aside header { padding-bottom: 16px; border-bottom: 2px solid #1b2238; }
+    .eyebrow { margin: 0 0 8px; font: 700 13px/1.4 "Courier New", monospace; letter-spacing: .08em; text-transform: uppercase; }
+    aside h1 { margin: 0; font: 400 40px/1.05 Impact, "Arial Narrow Bold", Haettenschweiler, sans-serif; text-transform: uppercase; }
+    aside h1 span { color: #d23b2a; }
+    .tagline { margin: 8px 0 0; }
+    #pair { display: grid; grid-template-columns: 124px minmax(0, 1fr); gap: 12px 16px; align-items: center; border: 2px solid #1b2238; background: #fffaf0; padding: 16px; }
+    #pair h2 { grid-column: 1 / -1; margin: 0; font: 400 26px/1.1 Impact, "Arial Narrow Bold", Haettenschweiler, sans-serif; text-transform: uppercase; }
+    #qr { width: 124px; height: 124px; border: 2px solid #1b2238; background: #fff; }
+    .pair-steps { margin: 0; }
+    .pair-steps strong { display: block; }
+    #status { grid-column: 1 / -1; padding: 8px 10px; border: 2px solid #1b2238; background: #e0a526; font: 700 16px/1.4 "Courier New", monospace; overflow-wrap: anywhere; }
+    #url { grid-column: 1 / -1; font: 700 13px/1.45 "Courier New", monospace; overflow-wrap: anywhere; }
+    #url:empty { display: none; }
+    aside .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    #tabs { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 2px solid #1b2238; background: #f2e8d5; }
+    #tabs button { min-height: 52px; border: 0; border-radius: 0; background: #f2e8d5; color: #1b2238; padding: 10px 4px; cursor: pointer; font: 400 22px/1.2 Impact, "Arial Narrow Bold", Haettenschweiler, sans-serif; text-transform: uppercase; }
     #tabs button + button { border-left: 2px solid #1b2238; }
-    #tabs button[aria-selected=true] { background: #1b2238; color: #f2e8d5; }
-    #tabs button:focus-visible { outline: 3px solid #d23b2a; outline-offset: -3px; }
-    .tabpanel { display: flex; flex-direction: column; gap: 16px; }
+    #tabs button:hover { background: #e0a526; }
+    #tabs button[aria-selected=true] { background: #1b2238; color: #fffaf0; }
+    #tabs button:focus-visible { outline: 3px solid #1b2238; outline-offset: -6px; }
+    #tabs button[aria-selected=true]:focus-visible { outline-color: #fffaf0; }
+    .tabpanel { display: flex; flex-direction: column; margin-top: -20px; border: 2px solid #1b2238; border-top: 0; background: #fffaf0; }
     .tabpanel[hidden] { display: none; }
-    #url { font: 11px "Courier New", ui-monospace, monospace; word-break: break-all; margin-top: 4px; }
-    @media (max-width: 800px) { body { grid-template-columns: 1fr; } #game { height: 60vh; } aside { height: auto; border-left: 0; border-top: 4px solid #1b2238; } }
+    .tabpanel > .row, .tabpanel > section { min-width: 0; padding: 20px; border: 0; background: transparent; gap: 12px; }
+    .tabpanel > * + section { border-top: 2px solid #1b2238; }
+    .tabpanel > .row > button { flex: 1 1 auto; }
+    /* ID scoping keeps these rules above the panels' injected styles. */
+    #voice .voice, #adapt .adapt, #twin .twin, #plan .plan, #lab .swing-lab { border: 0; padding: 0; background: transparent; gap: 12px; }
+    aside :is(#voice, #camera, #adapt, #twin, #replay, #lab, #plan) h2 { margin: 0; font: 400 26px/1.15 Impact, "Arial Narrow Bold", Haettenschweiler, sans-serif; text-transform: uppercase; }
+    aside :is(#voice, #camera, #adapt, #twin, #replay, #lab, #plan) p { margin: 0; font-size: 16px; line-height: 1.5; }
+    aside :is(#voice, #camera, #adapt, #twin, #replay, #lab, #plan) :is([aria-live], [data-numbers], [data-settings], [data-progress]) { font: 700 15px/1.45 "Courier New", monospace; font-variant-numeric: tabular-nums; }
+    aside :is(#voice, #camera, #adapt, #twin, #replay, #lab, #plan) button, #newgame, #simulate { min-height: 44px; max-width: 100%; border: 2px solid #1b2238; border-radius: 0; background: #f2e8d5; color: #1b2238; padding: 10px 14px; font: 400 18px/1.2 Impact, "Arial Narrow Bold", Haettenschweiler, sans-serif; text-transform: uppercase; cursor: pointer; box-shadow: none; transform: none; }
+    #newgame, #adapt button[data-go], #plan button { background: #e0a526; }
+    #voice button { background: #1b2238; color: #fffaf0; }
+    #voice button[aria-pressed=true] { background: #e0a526; color: #1b2238; }
+    aside :is(#voice, #camera, #adapt, #twin, #replay, #lab, #plan) button:hover:enabled, #newgame:hover:enabled, #simulate:hover:enabled { background: #e0a526; color: #1b2238; }
+    aside :is(#voice, #camera, #adapt, #twin, #replay, #lab, #plan) button:disabled, #newgame:disabled, #simulate:disabled { opacity: 1; color: #54545b; background: #f2e8d5; border-style: dashed; cursor: default; }
+    aside :is(#voice, #camera, #adapt, #twin, #replay, #lab, #plan) :focus-visible, #newgame:focus-visible, #simulate:focus-visible { outline: 3px solid #1b2238; outline-offset: 3px; }
+    aside :is(button, a, textarea) { scroll-margin-block: 80px 12px; }
+    #voice p:empty { display: none; }
+    #adapt :is(label, ul), #twin a { font-size: 16px; }
+    #adapt textarea { font: 16px/1.5 Georgia, serif; border-radius: 0; background: #fffaf0; }
+    #adapt textarea::placeholder { color: #54545b; opacity: 1; }
+    #replay { display: grid; gap: 12px; }
+    #lab .sl-heading { flex-wrap: wrap; }
+    #lab .swing-lab > .sl-heading { padding: 0; border: 0; }
+    #lab .sl-card { padding: 16px 0 0; border: 0; border-top: 2px solid #1b2238; background: transparent; }
+    #lab :is(.sl-muted, .sl-legend, .sl-stat span) { color: #1b2238; font-size: 14px; }
+    #lab .sl-coach[aria-live] { font: 16px/1.5 Georgia, serif; }
+    @media (max-width: 800px) {
+      body { grid-template-columns: minmax(0, 1fr); }
+      #game { height: 55vh; height: 55svh; }
+      aside { height: auto; overflow: visible; border-left: 0; border-top: 2px solid #1b2238; padding: 20px max(16px, calc((100% - 600px) / 2)); }
+    }
+    @media (max-width: 380px) {
+      aside h1 { font-size: 36px; }
+      #pair { grid-template-columns: 112px minmax(0, 1fr); gap: 12px; padding: 12px; }
+      #qr { width: 112px; height: 112px; }
+      .tabpanel > .row, .tabpanel > section { padding: 16px; }
+      #lab .sl-stats { grid-template-columns: 1fr; }
+      #lab .sl-stat + .sl-stat { border-left: 0; border-top: 2px solid #1b2238; }
+    }
   </style>
 </head>
 <body>
   <main id="game" aria-label="Bowling lane"></main>
   <aside>
-    <h1>Motion<span>Play</span> Bowl</h1>
+    <header>
+      <p class="eyebrow">Single player / Ten frames</p>
+      <h1>Motion<span>Play</span> Bowl</h1>
+      <p class="tagline">Your phone. Your swing. Your lane.</p>
+    </header>
     <section id="pair" aria-label="Connect your phone">
+      <h2>Scan to bowl</h2>
       <canvas id="qr" role="img" aria-label="QR code that opens the controller on your phone"></canvas>
-      <div>
-        <div id="status" aria-live="polite">Starting…</div>
-        <div>Scan with your phone, hold anywhere on its screen, swing, let go.</div>
-        <div id="url"></div>
-      </div>
+      <p class="pair-steps"><strong>Enable motion.</strong> Hold the screen, swing, then release your touch. Keep a firm grip.</p>
+      <div id="status" aria-live="polite">Starting…</div>
+      <div id="url"></div>
     </section>
     <nav id="tabs" role="tablist" aria-label="Side panels">
       <button type="button" role="tab" id="t-play" aria-controls="tab-play" aria-selected="true">Play</button>

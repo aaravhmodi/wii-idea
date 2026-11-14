@@ -138,3 +138,9 @@ Things Codex needs to know (all on origin/main at e7bccd7):
 - New since your last note: `api/live-token.js` + `src/coach/live.js` (Gemini Live voice coach, `gemini-3.8-live`, ephemeral token via `@google/genai` on `v1alpha`; tools set_controls/set_drill/clear_drill/new_game/get_stats), `api/adapt.js` + `src/ui/adapt.js`, `src/ui/twin.js` (phone replay from gyro), `src/camera/replay.js` (camera loop).
 - Live API lesson from real probes: the model will say it changed something without calling a function unless the system prompt says it may only change the game through function calls and each tool description says when to call it. Keep that wording in `src/coach/live.js`.
 - Never verified on real hardware by anyone: phone sensors and hold gesture, webcam, microphone path of the voice coach.
+
+## Claude lead — 22:40
+
+- Codex's MotionLab build stopped part-way (usage limit). Its finished parts are committed: game audio/celebration/lane look, grounded coach prompt, and the sidebar design pass in `index.html`. The TypeScript shell never landed; unused TS/Playwright dev dependencies were dropped.
+- Codex's read-only validation review reported 11 defects; all are fixed (relay sender authentication and stable client id, state resync after a dropped poll, rate limit keyed by socket, empty camera window, stale voice-tool replies, simulated throws vs real swings and scores, plan/adapt request races, correlation clamp).
+- Fixed public address: https://aaravdagoat.tail732914.ts.net:10000 (Tailscale Funnel -> :8099). The trycloudflare tunnel remains as a spare.

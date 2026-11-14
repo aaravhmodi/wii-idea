@@ -196,6 +196,7 @@ export function createCamera(container) {
   function capture(durationMs) {
     const from = performance.now() - Math.min(6000, Math.max(300, Number(durationMs) || 0));
     const f = frames.filter(x => x.t >= from);
+    if (!f.length) return { frames: [], clip: [], pose: null }; // just switched on, or the tab was in the background
     const picks = [...new Set(Array.from({ length: 6 }, (_, i) => Math.round(i * (f.length - 1) / 5)))].filter(i => i >= 0); // six evenly spaced
     return {
       frames: picks.map(i => f[i].jpeg),

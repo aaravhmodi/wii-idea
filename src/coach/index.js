@@ -45,7 +45,7 @@ export function trends(records = getHistory()) {
   const denominator = Math.sqrt(history.reduce((sum, record) => sum + (record.params.speed - averageSpeed) ** 2, 0)
     * history.reduce((sum, record) => sum + (record.result.pinsDown - averagePins) ** 2, 0));
   return { count: history.length, averagePins, averageSpeed, averageDurationMs, consistency,
-    speedPinsCorrelation: denominator ? covariance / denominator : 0 };
+    speedPinsCorrelation: denominator ? Math.max(-1, Math.min(1, covariance / denominator)) : 0 };
 }
 
 export async function getCoaching(data) {

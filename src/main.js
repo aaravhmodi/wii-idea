@@ -19,7 +19,7 @@ const camera = createCamera(document.getElementById('camera'));
 const replay = createReplay(document.getElementById('replay'));
 const twin = createTwin(document.getElementById('twin'));
 const status = document.getElementById('status');
-let throwNo = 0, lastReview = null;
+let throwNo = 0, lastReview = null, mixedGame = false, adaptRun = 0;
 
 // Control mapping chosen by Gemini for this player; kept across reloads.
 const MAPPING_KEY = 'motionplay.mapping.v1';
@@ -34,7 +34,7 @@ const voice = createVoiceCoach(document.getElementById('voice'), {
   set_controls(args) { setMapping(args); return { applied: mapping }; },
   set_drill(args) { if (game.busy) throw new Error('The ball is rolling; try again in a moment.'); game.setDrill(args); return 'ok'; },
   clear_drill() { if (game.busy) throw new Error('The ball is rolling; try again in a moment.'); game.setDrill(null); return 'ok'; },
-  new_game() { if (game.busy) throw new Error('The ball is rolling; try again in a moment.'); ++throwNo; game.reset(); lab.reset(); return 'ok'; },
+  new_game() { if (game.busy) throw new Error('The ball is rolling; try again in a moment.'); ++throwNo; mixedGame = false; game.reset(); lab.reset(); return 'ok'; },
   get_stats() { return { controls: mapping, score: game.score.total, frame: game.score.frame, last20: trends(getHistory()), trainingPlan: plan.current }; },
   async review_last_throw() {
     if (!lastReview) throw new Error('No throw yet.');
@@ -53,22 +53,25 @@ createAdapt(document.getElementById('adapt'), {
     const history = getHistory();
     if (!history.length) throw new Error('Make at least one throw first. Any comfortable movement counts.');
     if (game.busy) throw new Error('Wait for the ball to stop, then try again.');
-    const recent = history.slice(-5);
+    const recent = history.slice(-5), run = ++adaptRun;
     const adaptation = await getAdaptation({ samples: recent.map(r => r.features), pins: recent.map(r => r.result.pinsDown), trends: trends(history), request });
+    if (run !== adaptRun) throw new Error('Controls were reset while Gemini was answering; nothing was changed.');
     setMapping(adaptation.mapping);
     game.setDrill(adaptation.drill);
     return adaptation;
   },
   reset() {
     setMapping(null);
+    ++adaptRun; // a pending adaptation must not undo this
     game.setDrill(null);
   },
 });
 
 async function onSwing({ samples, simulated = false }) {
   if (!validSwing({ type: 'swing', samples })) throw new Error('Invalid motion recording.');
-  if (game.busy) return;
-  if (game.score.complete) game.reset(); // a swing after frame ten starts the next game
+  if (game.busy) throw new Error('A ball is already rolling.'); // the phone is told the throw did not count
+  if (game.score.complete) { game.reset(); mixedGame = false; } // a swing after frame ten starts the next game
+  if (simulated) mixedGame = true;
   const mine = ++throwNo;
   const features = extractFeatures(samples);
   const profile = toProfile(samples);
@@ -96,13 +99,14 @@ async function onSwing({ samples, simulated = false }) {
   lastReview = getCoaching({ features, result, trends: trends(getHistory()), source: simulated ? 'simulation' : 'sensor', mapping, ...(recent.length && { recent }),
     ...(seen.pose && { pose: seen.pose }), ...(seen.frames.length && { frames: seen.frames }) });
   void lastReview.then(reply => { if (mine === throwNo) lab.setCoach(reply); });
-  if (game.score.complete && !simulated) void plan.gameFinished(game.score.total);
+  if (game.score.complete && !mixedGame) void plan.gameFinished(game.score.total); // games with simulated throws are not the player's score
   return result;
 }
 
 document.getElementById('newgame').addEventListener('click', () => {
   if (game.busy) return;
   ++throwNo;
+  mixedGame = false;
   game.reset();
   lab.reset();
 });

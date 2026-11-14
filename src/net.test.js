@@ -11,17 +11,19 @@ beforeAll(async () => {
 afterAll(() => { server.closeAllConnections(); server.close(); });
 
 const poll = (side, client) => fetch(`${base}/${side}?client=${client}`).then(async r => (r.ok ? r.json() : r.status));
-const send = (side, body) => fetch(`${base}/${side}`, { method: 'POST', body }).then(r => r.status);
+const send = (side, body, client = side === 'host' ? 'laptop' : 'phone-a') => fetch(`${base}/${side}?client=${client}`, { method: 'POST', body }).then(r => r.status);
 
 it('relays between one laptop and one phone', async () => {
   expect(await poll('host', 'laptop')).toEqual([]); // first poll answers at once
   const waiting = poll('host', 'laptop'); // held open until something arrives
-  expect(await send('phone', '{}')).toBe(404); // phone is not connected yet
+  expect(await send('phone', '{}')).toBe(403); // phone is not connected yet
 
   const phoneFirst = await poll('phone', 'phone-a'); // joining answers at once with the laptop's presence
   expect(phoneFirst).toEqual([{ type: 'peer', online: true }]);
   expect(await waiting).toEqual([{ type: 'peer', online: true }]);
   expect(await poll('phone', 'phone-b')).toBe(409); // single player
+  expect(await send('phone', JSON.stringify({ type: 'swing', samples: [] }), 'phone-b')).toBe(403); // and it cannot inject throws
+  expect(await poll('host', 'intruder')).toBe(409);
 
   const hostWaiting = poll('host', 'laptop');
   expect(await send('phone', JSON.stringify({ type: 'swing', samples: [] }))).toBe(204);

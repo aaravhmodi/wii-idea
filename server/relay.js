@@ -29,10 +29,10 @@ export function relay(req, res, next) {
   const room = rooms.get(id) ?? {};
 
   if (req.method === 'GET') {
-    const client = new URLSearchParams(query).get('client') ?? '';
+    const params = new URLSearchParams(query), client = params.get('client') ?? '';
     let me = room[side];
-    const fresh = !me || me.client !== client;
-    if (side === 'phone' && me && me.client !== client) { res.writeHead(409).end(); return true; } // single player: one phone per lane
+    const fresh = !me;
+    if (!client || (me && me.client !== client)) { res.writeHead(409).end(); return true; } // one laptop and one phone per lane
     if (fresh) {
       me = room[side] = { client, queue: [], waiter: null };
       rooms.set(id, room);
@@ -52,7 +52,7 @@ export function relay(req, res, next) {
         if (!room.host && !room.phone) rooms.delete(id);
       }, GONE);
     });
-    if (fresh || me.queue.length) flush(me); // the first poll answers at once so the page knows it is connected
+    if (fresh || params.has('first') || me.queue.length) flush(me); // a page's first poll answers at once so it knows it is connected
     return true;
   }
 
@@ -67,7 +67,8 @@ export function relay(req, res, next) {
     if (size > MAX_BODY) { res.writeHead(413).end(); return; }
     let message;
     try { message = JSON.parse(Buffer.concat(chunks).toString()); } catch { res.writeHead(400).end(); return; }
-    if (!room[side] || !room[other(side)]) { res.writeHead(404).end(); return; } // only a connected side may send, and only to a listener
+    if (room[side]?.client !== new URLSearchParams(query).get('client')) { res.writeHead(403).end(); return; } // only the registered sender
+    if (!room[other(side)]) { res.writeHead(404).end(); return; } // nobody is listening
     send(room[other(side)], message);
     res.writeHead(204).end();
   });
