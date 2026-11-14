@@ -20,7 +20,7 @@ export function extractFeatures(input) {
   const durationMs = samples.at(-1).t - samples[0].t;
   const acceleration = samples.map(s => Math.hypot(s.ax, s.ay, s.az));
   const peakAccel = Math.max(...acceleration);
-  const peakRot = Math.max(...samples.map(s => Math.abs(s.rx)));
+  const peakRot = Math.max(...samples.map(s => Math.hypot(s.rx, s.rz))); // swing arc in either grip: flat in the palm (x) or edge-on like a remote (z)
   let twistDeg = 0, absoluteTwist = 0, variation = 0;
   const cumulative = [0];
   for (let i = 1; i < samples.length; i++) {
@@ -48,7 +48,7 @@ export function toProfile(input) {
     while (cursor < samples.length - 2 && samples[cursor + 1].t < t) cursor++;
     const a = samples[cursor], b = samples[cursor + 1];
     const fraction = (t - a.t) / (b.t - a.t);
-    profile.swing.push(Math.abs(a.rx + (b.rx - a.rx) * fraction));
+    profile.swing.push(Math.hypot(a.rx + (b.rx - a.rx) * fraction, a.rz + (b.rz - a.rz) * fraction));
     profile.twist.push(a.ry + (b.ry - a.ry) * fraction);
   }
   return profile;

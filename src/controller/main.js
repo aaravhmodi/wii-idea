@@ -14,7 +14,7 @@ const armed = () => permitted && !!link?.ready;
 function sync() { hold.disabled = !armed(); document.documentElement.classList.toggle('armed', armed()); }
 // The lock is dropped whenever the page is hidden, so this is re-run on return.
 function wake() { if (permitted) navigator.wakeLock?.request('screen').catch(() => {}); }
-let liveSwing = 0, liveSentAt = 0;
+let liveSwing = 0, liveSwingZ = 0, liveSentAt = 0;
 function cancel(message) {
   if (recording) link?.live?.(null); // the ball on the laptop returns to rest
   recording = false;
@@ -64,9 +64,13 @@ window.addEventListener('devicemotion', event => {
   clearTimeout(sensorTimer);
   if (!recording || t > MAX_DURATION || samples.length >= MAX_SAMPLES || (samples.length && t <= samples.at(-1).t)) return;
   // Live swing angle (degrees, integrated from the gyro) so the ball on the laptop follows the phone before release.
-  if (samples.length) liveSwing += (samples.at(-1).rx + sample.rx) * (t - samples.at(-1).t) / 2000;
+  if (samples.length) {
+    const dt = (t - samples.at(-1).t) / 2000;
+    liveSwing += (samples.at(-1).rx + sample.rx) * dt; // flat-in-the-palm grip
+    liveSwingZ += (samples.at(-1).rz + sample.rz) * dt; // edge-on, remote-style grip
+  }
   samples.push(sample);
-  if (t - liveSentAt >= 80) { liveSentAt = t; link?.live?.(liveSwing); }
+  if (t - liveSentAt >= 60) { liveSentAt = t; link?.live?.(Math.abs(liveSwingZ) > Math.abs(liveSwing) ? liveSwingZ : liveSwing); }
   meter.style.width = `${Math.min(100, t / MAX_DURATION * 100)}%`;
 });
 
@@ -76,7 +80,7 @@ function begin(id, event) {
   event.preventDefault();
   holder = id;
   samples = [];
-  liveSwing = 0; liveSentAt = 0;
+  liveSwing = 0; liveSwingZ = 0; liveSentAt = 0;
   start = performance.now();
   recording = true;
   hold.classList.add('recording');
@@ -91,7 +95,7 @@ function release(id, event) {
   const message = { type: 'swing', samples };
   cancel();
   if (!validSwing(message)) { status.textContent = 'Not enough motion readings. Hold a little longer and check your sensor permissions.'; return; }
-  if (link.send(message)) navigator.vibrate?.(35);
+  if (link.send(message)) haptics.play([35]);
   else status.textContent = 'The laptop is not ready. Reconnect and try again.';
   sync();
 }

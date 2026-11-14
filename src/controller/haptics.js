@@ -13,7 +13,7 @@ export function createHaptics() {
   // so each buzz in the pattern becomes a tick. Best effort: older iOS versions do nothing.
   const label = document.createElement('label');
   label.setAttribute('aria-hidden', 'true');
-  label.style.cssText = 'position:fixed;left:-99px;top:0;opacity:0;pointer-events:none';
+  label.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:.01;pointer-events:none'; // on screen: iOS ignores switches outside the viewport
   label.innerHTML = '<input type="checkbox" switch tabindex="-1">';
   document.body.append(label);
 
@@ -35,9 +35,12 @@ export function createHaptics() {
       if (navigator.vibrate) navigator.vibrate(pattern);
       else {
         let at = 0;
-        pattern.forEach((ms, i) => { if (i % 2 === 0) setTimeout(() => label.click(), at); at += ms; });
+        pattern.forEach((ms, i) => {
+          if (i % 2 === 0) { if (at === 0) label.click(); else setTimeout(() => label.click(), at); } // the first tick runs inside the tap itself
+          at += ms;
+        });
       }
-      crash(Math.min(0.6, total / 1000));
+      if (total > 60) crash(Math.min(0.7, total / 1000)); // the single release tick stays silent
     },
   };
 }

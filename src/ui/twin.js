@@ -5,11 +5,13 @@ import * as THREE from 'three';
 
 /** Integrates the gyro rates into angles. Returns [{ t (ms from start), swing, twist }] in degrees, starting at 0. */
 export function swingAngles(samples) {
+  // The swing shows up on x when the phone lies flat in the palm and on z when it is held edge-on like a remote.
+  const axis = samples.reduce((sum, s) => sum + Math.abs(s.rz) - Math.abs(s.rx), 0) > 0 ? 'rz' : 'rx';
   let swing = 0, twist = 0;
   return samples.map((sample, i) => {
     if (i) {
       const dt = (sample.t - samples[i - 1].t) / 1000;
-      swing += (samples[i - 1].rx + sample.rx) * dt / 2;
+      swing += (samples[i - 1][axis] + sample[axis]) * dt / 2;
       twist += (samples[i - 1].ry + sample.ry) * dt / 2;
     }
     return { t: sample.t - samples[0].t, swing, twist };

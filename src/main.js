@@ -160,8 +160,10 @@ let aimTimer;
 host(onSwing, (text) => { status.textContent = text; }, swing => {
   if (game.busy) return;
   game.aim(typeof swing === 'number' ? swing : null);
+  if (typeof swing === 'number') status.textContent = 'Phone held · the ball follows your swing';
+  else if (status.textContent.startsWith('Phone held')) status.textContent = 'Phone connected';
   clearTimeout(aimTimer);
-  aimTimer = setTimeout(() => game.aim(null), 1200); // the phone went quiet: put the ball back
+  aimTimer = setTimeout(() => { game.aim(null); if (status.textContent.startsWith('Phone held')) status.textContent = 'Phone connected'; }, 1200); // the phone went quiet: put the ball back
 })
   .then(({ url, send }) => {
     sendToPhone = send;

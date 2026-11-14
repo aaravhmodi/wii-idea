@@ -47,7 +47,8 @@ createServer(async (req, res) => {
     }
     const file = join(dist, normalize(decodeURIComponent(path === '/' ? '/index.html' : path)));
     if (!file.startsWith(dist + sep) || !existsSync(file) || !statSync(file).isFile()) return res.writeHead(404).end('Not found');
-    res.writeHead(200, { 'Content-Type': types[extname(file)] ?? 'application/octet-stream' });
+    // Pages are always re-checked so a phone or laptop never runs an old build against a new one; hashed assets can be kept.
+    res.writeHead(200, { 'Content-Type': types[extname(file)] ?? 'application/octet-stream', 'Cache-Control': file.endsWith('.html') ? 'no-store' : 'public, max-age=31536000, immutable' });
     createReadStream(file).pipe(res);
   } catch { if (!res.headersSent) res.writeHead(500); res.end(); }
 }).listen(port, () => console.log(`MotionPlay on http://localhost:${port}`));
