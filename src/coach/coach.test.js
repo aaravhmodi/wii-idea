@@ -79,10 +79,10 @@ describe('coach API validation and model fallback', () => {
 });
 
 describe('camera frames and pose', () => {
-  const pose = { samples: 30, armSwingDeg: 110, releaseWristHeight: -0.4, kneeBendDeg: 150, shoulderTiltDeg: 5, visibility: 0.9 };
+  const pose = { samples: 30, armSwingDeg: 110, releaseWristHeight: -0.4, shoulderTiltDeg: 5, visibility: 0.9 };
   it('validates every pose field and both inclusive bounds', async () => {
     vi.stubEnv('GEMINI_API_KEY', '');
-    const bounds = { samples: [1, 200], armSwingDeg: [0, 360], releaseWristHeight: [-3, 3], kneeBendDeg: [0, 180], shoulderTiltDeg: [-90, 90], visibility: [0, 1] };
+    const bounds = { samples: [1, 200], armSwingDeg: [0, 360], releaseWristHeight: [-3, 3], shoulderTiltDeg: [-90, 90], visibility: [0, 1] };
     for (const [key, [min, max]] of Object.entries(bounds)) {
       for (const value of [min, max]) expect((await POST(request({ ...payload, pose: { ...pose, [key]: value } }))).status).toBe(200);
       for (const value of [min - 1, max + 1, NaN, Infinity, '1', undefined]) expect((await POST(request({ ...payload, pose: { ...pose, [key]: value } }))).status).toBe(400);
@@ -120,7 +120,7 @@ describe('camera frames and pose', () => {
     const fetch = vi.fn(); vi.stubGlobal('fetch', fetch);
     expect((await POST(request({ ...payload, frames: Array(7).fill('QUJD') }))).status).toBe(400);
     expect((await POST(request({ ...payload, frames: ['<script>'] }))).status).toBe(400);
-    expect((await POST(request({ ...payload, pose: { ...pose, kneeBendDeg: 999 } }))).status).toBe(400);
+    expect((await POST(request({ ...payload, pose: { ...pose, armSwingDeg: 999 } }))).status).toBe(400);
     expect(fetch).not.toHaveBeenCalled();
   });
   it('sends frames to Gemini as images and marks the reply as vision', async () => {

@@ -57,7 +57,7 @@ export function createCamera(container) {
     <canvas role="img" aria-label="Live camera view with your body outline drawn over it" hidden></canvas>
     <div class="cam-live" hidden></div>
     <div class="cam-status" aria-live="polite">Camera is off.</div>
-    <p class="cam-note">Body tracking runs on this laptop. While the camera is on, up to six still frames of each swing are sent to Google Gemini for coaching; nothing is sent when it is off.</p>`;
+    <p class="cam-note">Only your upper body needs to be in view: both shoulders and your throwing arm. Body tracking runs on this laptop. While the camera is on, up to six still frames of each swing are sent to Google Gemini for coaching; nothing is sent when it is off.</p>`;
   const button = container.querySelector('button');
   const canvas = container.querySelector('canvas');
   const live = container.querySelector('.cam-live');
@@ -158,7 +158,7 @@ export function createCamera(container) {
       while (frames.length && frames[0].t < now - KEEP_MS) frames.shift();
     }
 
-    if (!visibleBody(lm)) { setLive('NO BODY IN VIEW'); return; }
+    if (!visibleBody(lm)) { setLive('SHOULDERS NOT IN VIEW'); return; }
     if (now - lastPoseAt >= POSE_EVERY_MS) {
       lastPoseAt = now;
       poses.push({ t: now, lm });

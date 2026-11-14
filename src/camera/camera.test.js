@@ -16,7 +16,7 @@ function body({ rightArmDeg = 0, kneeDrop = 0, visibility = 0.9 } = {}) {
 }
 
 const inRange = (p) => {
-  const ranges = { samples: [1, 200], armSwingDeg: [0, 360], releaseWristHeight: [-3, 3], kneeBendDeg: [0, 180], shoulderTiltDeg: [-90, 90], visibility: [0, 1] };
+  const ranges = { samples: [1, 200], armSwingDeg: [0, 360], releaseWristHeight: [-3, 3], shoulderTiltDeg: [-90, 90], visibility: [0, 1] };
   expect(Object.keys(p).sort()).toEqual(Object.keys(ranges).sort());
   for (const [k, [lo, hi]] of Object.entries(ranges)) {
     expect(Number.isFinite(p[k]), k).toBe(true);
@@ -31,9 +31,8 @@ describe('poseStats', () => {
     inRange(p);
     expect(p.samples).toBe(10);
     expect(p.armSwingDeg).toBeCloseTo(0, 5);
-    expect(p.kneeBendDeg).toBeCloseTo(180, 3);
     expect(p.shoulderTiltDeg).toBeCloseTo(0, 5);
-    expect(p.releaseWristHeight).toBeLessThan(0); // hanging hand is below the hip line
+    expect(p.releaseWristHeight).toBeLessThan(0); // hanging hand is below the shoulder line
     expect(p.visibility).toBeCloseTo(0.9, 5);
   });
 
@@ -46,9 +45,14 @@ describe('poseStats', () => {
     expect(throwingSide(samples)).toBe(1);
     expect(p.armSwingDeg).toBeCloseTo(210, 3);
     expect(p.releaseWristHeight).toBeGreaterThan(1); // finished above the shoulder
-    expect(p.kneeBendDeg).toBeLessThan(160);
-    expect(p.kneeBendDeg).toBeGreaterThan(90);
     expect(armAngleDeg(samples.at(-1), 1)).toBeCloseTo(150, 3);
+  });
+
+  it('needs only the upper body: hips and legs out of frame still give a pose', () => {
+    const cropped = Array.from({ length: 5 }, () => { const lm = body(); for (let i = 23; i < 33; i++) lm[i] = { x: 0.5, y: 1.2, visibility: 0 }; return lm; });
+    const p = poseStats(cropped);
+    inRange(p);
+    expect(p.visibility).toBeCloseTo(0.9, 5);
   });
 
   it('returns null with too few visible samples', () => {
