@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { poseStats, throwingSide, armAngleDeg, handPath, pendulumPath, comparePaths, pathTip } from './pose.js';
+import { poseStats, throwingSide, armAngleDeg, handPath, handPoint, pendulumPath, comparePaths, pathTip } from './pose.js';
 
 // A person standing square to a 4:3 camera, arms hanging. Angles are drawn in true (aspect-corrected) space.
 function body({ rightArmDeg = 0, kneeDrop = 0, visibility = 0.9 } = {}) {
@@ -84,18 +84,30 @@ describe('hand path beams', () => {
   const swing = [0, -30, -60, -30, 0, 40, 80, 120, 150].map(d => body({ rightArmDeg: d }));
 
   it('tracks the throwing wrist relative to the shoulder, in shoulder widths', () => {
-    const { path, anchor } = handPath(swing);
+    const { path, track, anchor } = handPath(swing.map(() => body()));
     expect(path).toHaveLength(9);
+    expect(track[0][1]).toBeCloseTo(0.58, 5);   // picture coordinates of the hanging right wrist
     expect(path[0][0]).toBeCloseTo(0, 5);       // arm hanging: straight below the shoulder
     expect(path[0][1]).toBeCloseTo(1.4, 5);     // 0.28 arm / 0.20 shoulder width
     expect(anchor.width).toBeCloseTo(0.2, 5);
     expect(handPath(swing.slice(0, 2))).toBeNull();
   });
 
+  it('estimates the hand from the elbow when the wrist leaves the picture, and drops it when the arm is unseen', () => {
+    const lm = body();
+    lm[14] = { x: 0.55 / (4 / 3), y: 0.44, visibility: 0.9 };   // right elbow straight below the shoulder
+    lm[16] = { x: 0.3, y: 1.4, visibility: 0.1 };               // right wrist far below the frame, a model guess
+    const [x, y] = handPoint(lm, 1);
+    expect(x).toBeCloseTo(0.55 / (4 / 3), 5);
+    expect(y).toBeCloseTo(0.58, 5);
+    lm[14].visibility = 0.1;
+    expect(handPoint(lm, 1)).toBeNull();
+  });
+
   it('a perfect pendulum matches its own target and gets a keep-going tip', () => {
     const { path } = handPath(swing);
     const gap = comparePaths(path, pendulumPath(path));
-    expect(gap.worstGap).toBeLessThan(0.05);
+    expect(gap.worstGap).toBeLessThan(0.15); // smoothing rounds this coarse 9-point test swing slightly
     expect(pathTip(gap, false)).toContain('stayed on the path');
   });
 

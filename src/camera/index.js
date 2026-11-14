@@ -1,8 +1,8 @@
-import { poseStats, throwingSide, armAngleDeg, visibleBody, handPath } from './pose.js';
+import { poseStats, throwingSide, armAngleDeg, visibleBody, handPath, handPoint } from './pose.js';
 
 // Pinned to the installed @mediapipe/tasks-vision version; bump both together.
 const WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm';
-const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
+const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task';
 
 const KEEP_MS = 6000;      // rolling buffer length
 const FRAME_EVERY_MS = 100; // 10 fps: smooth enough for the replay panel
@@ -196,7 +196,8 @@ export function createCamera(container) {
     ctx.strokeStyle = '#1b2238';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(...at(15 + side), 9, 0, Math.PI * 2);
+    const hand = handPoint(lm, side);
+    if (hand) ctx.arc((1 - hand[0]) * w, hand[1] * h, 9, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     setLive(`ARM ${String(Math.round(armAngleDeg(lm, side, aspect))).padStart(3, ' ')}°`);

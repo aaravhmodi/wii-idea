@@ -9,7 +9,7 @@ import { getAdaptation, getCoaching, getPlan, getHistory, recordThrow, bestThrow
 import { validSwing } from './controller/capture.js';
 import { createCamera } from './camera/index.js';
 import { createReplay } from './camera/replay.js';
-import { pendulumPath } from './camera/pose.js';
+import { comparePaths, pendulumPath } from './camera/pose.js';
 import { createVoiceCoach } from './coach/live.js';
 import { createTwin } from './ui/twin.js';
 import { createPlan } from './ui/plan.js';
@@ -88,13 +88,15 @@ async function onSwing({ samples, simulated = false }) {
   // The message arrives right after release, so the last durationMs (+ relay delay margin) of camera buffer is the swing.
   const seen = camera.active ? camera.capture(features.durationMs + 300) : { frames: [], pose: null };
   // The camera clip is cut half a second later so it includes the follow-through.
-  let handPathNow = null;
+  let handPathNow = null, beam = null;
   if (camera.active) setTimeout(() => {
     const cut = camera.capture(features.durationMs + 800);
     handPathNow = cut.path ?? null;
     // Aim for the hand path of the player's best throw; before there is one, a smooth pendulum of the same swing.
     const best = bestThrow(getHistory())?.handPath;
-    void replay.show(cut, cut.path ? { path: best ?? pendulumPath(cut.path), best: !!best } : null);
+    const target = cut.path ? { path: best ?? pendulumPath(cut.path), best: !!best } : null;
+    if (target) beam = { ...comparePaths(cut.path, target.path), against: best ? 'best' : 'pendulum' };
+    void replay.show(cut, target);
   }, 500);
   twin.show(samples);
   const bestProfile = bestThrow(getHistory())?.profile ?? null;
@@ -114,7 +116,7 @@ async function onSwing({ samples, simulated = false }) {
 
   // Release the phone as soon as the lane is ready; coaching can finish independently.
   lastReview = getCoaching({ features, result, trends: trends(getHistory()), source: simulated ? 'simulation' : 'sensor', mapping, ...(recent.length && { recent }),
-    ...(seen.pose && { pose: seen.pose }), ...(seen.frames.length && { frames: seen.frames }) });
+    ...(seen.pose && { pose: seen.pose }), ...(seen.frames.length && { frames: seen.frames }), ...(beam && { beam }) });
   void lastReview.then(reply => { if (mine === throwNo) lab.setCoach(reply); });
   if (game.score.complete && !mixedGame) void plan.gameFinished(game.score.total); // games with simulated throws are not the player's score
   return result;

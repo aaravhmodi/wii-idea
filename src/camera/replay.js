@@ -51,12 +51,14 @@ export function createReplay(container) {
       clearInterval(timer);
       canvas.width = first.width; canvas.height = first.height;
       // Paths are stored relative to the throwing shoulder in shoulder widths; place them on this video.
-      const place = path => (cut.anchor ? path.map(([u, v]) => [cut.anchor.x * canvas.width + u * cut.anchor.width * canvas.height,
+      // The picture is mirrored like the live view, so x is flipped for both beams.
+      const place = path => (cut.anchor ? path.map(([u, v]) => [(1 - cut.anchor.x) * canvas.width - u * cut.anchor.width * canvas.height,
         cut.anchor.y * canvas.height + v * cut.anchor.width * canvas.height]) : []);
-      const hand = place(cut.path ?? []), aim = hand.length > 1 && target ? place(target.path) : [];
+      const hand = (cut.track ?? []).map(([x, y]) => [(1 - x) * canvas.width, y * canvas.height]); // exactly where the hand was in the video
+      const aim = hand.length > 1 && target ? place(target.path) : [];
       let i = 0;
       const draw = () => {
-        if (images[i]) context.drawImage(images[i], 0, 0);
+        if (images[i]) { context.save(); context.scale(-1, 1); context.drawImage(images[i], -canvas.width, 0); context.restore(); }
         beam(aim, '#e0a526', aim.length, true);
         const reached = Math.max(2, Math.round((i + 1) / images.length * hand.length));
         beam(hand, '#d23b2a', reached, false); // the hand's beam grows with the video
@@ -67,7 +69,8 @@ export function createReplay(container) {
       canvas.hidden = false;
       find('.legend').hidden = aim.length < 2;
       find('[data-target-name]').textContent = target?.best ? 'Your best throw' : 'Smooth pendulum';
-      const tip = aim.length > 1 ? pathTip(comparePaths(cut.path, target.path), target.best) : '';
+      const gap = aim.length > 1 ? comparePaths(cut.path, target.path) : null;
+      const tip = gap ? pathTip({ ...gap, releaseAcross: -gap.releaseAcross }, target.best) : ''; // left and right as seen in the mirrored picture
       find('[data-tip]').textContent = tip; find('[data-tip]').hidden = !tip;
       find('[data-note]').textContent = hand.length > 1
         ? `${(clip.length * FRAME_MS / 1000).toFixed(1)}s · hand tracked by the laptop camera`

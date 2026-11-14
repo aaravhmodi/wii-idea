@@ -17,13 +17,30 @@ export function visibleBody(lm) {
     Number.isFinite(lm[i]?.x) && Number.isFinite(lm[i]?.y) && vis(lm, i) > 0.5);
 }
 
-// 0 = left arm, 1 = right arm: the wrist that travelled furthest. Ties go to the right arm.
+const ELBOW = 13;
+// Where the hand holding the phone is, in picture coordinates (0..1), or null when it cannot be told.
+// A laptop camera loses the hand at the bottom of a swing; the model then guesses wildly, so an unseen
+// wrist is replaced by a straight-arm estimate from the shoulder and elbow, or dropped.
+export function handPoint(lm, side) {
+  const seen = i => vis(lm, i) > 0.5 && Number.isFinite(lm[i]?.x) && Number.isFinite(lm[i]?.y);
+  const w = lm[WRIST + side];
+  if (seen(WRIST + side) && w.x > -0.05 && w.x < 1.05 && w.y > -0.05 && w.y < 1.05) return [w.x, w.y];
+  if (seen(ELBOW + side) && seen(SHOULDER + side)) {
+    const e = lm[ELBOW + side], sh = lm[SHOULDER + side];
+    return [2 * e.x - sh.x, 2 * e.y - sh.y]; // forearm continues the upper arm
+  }
+  return null;
+}
+
+// 0 = left arm, 1 = right arm: the hand that travelled furthest while it could be seen. Ties go to the right arm.
 export function throwingSide(samples, aspect = 4 / 3) {
   const path = [0, 0];
-  for (let i = 1; i < samples.length; i++) {
-    for (const side of [0, 1]) {
-      const d = dist(pt(samples[i], WRIST + side, aspect), pt(samples[i - 1], WRIST + side, aspect));
-      if (Number.isFinite(d)) path[side] += d;
+  for (const side of [0, 1]) {
+    let previous = null;
+    for (const lm of samples) {
+      const p = handPoint(lm, side);
+      if (p && previous) path[side] += Math.hypot((p[0] - previous[0]) * aspect, p[1] - previous[1]);
+      if (p) previous = p;
     }
   }
   return path[0] > path[1] ? 0 : 1;
@@ -73,20 +90,33 @@ export function poseStats(samples, aspect = 4 / 3) {
 // Points are [u, v]: offset of the throwing wrist from the throwing shoulder in shoulder widths
 // (u right, v down, as the camera sees it), so paths from different throws and positions compare.
 
-/** samples: landmark arrays, oldest first. Returns { path, anchor } or null. anchor places the path on the last frame. */
+/**
+ * samples: landmark arrays, oldest first. Returns null, or:
+ *   track  - the hand in picture coordinates [x, y] (0..1), smoothed, for drawing on the video;
+ *   path   - the same points relative to the throwing shoulder in shoulder widths, for comparing throws;
+ *   anchor - the average shoulder position and width, to place a stored path on this video.
+ */
 export function handPath(samples, aspect = 4 / 3) {
   const s = (samples ?? []).filter(visibleBody);
   if (s.length < 3) return null;
   const side = throwingSide(s, aspect);
   const width = lm => dist(pt(lm, SHOULDER, aspect), pt(lm, SHOULDER + 1, aspect));
-  const step = Math.max(1, Math.ceil(s.length / 40)); // at most about 40 points
-  const path = [];
-  for (let i = 0; i < s.length; i += step) {
-    const lm = s[i], sh = pt(lm, SHOULDER + side, aspect), w = pt(lm, WRIST + side, aspect), wide = width(lm);
-    if (wide > 0 && Number.isFinite(w[0]) && Number.isFinite(w[1])) path.push([clamp((w[0] - sh[0]) / wide, -6, 6, 0), clamp((w[1] - sh[1]) / wide, -6, 6, 0)]);
+  const seen = s.map(lm => ({ lm, hand: handPoint(lm, side) })).filter(x => x.hand && width(x.lm) > 0);
+  if (seen.length < 3) return null;
+  // Average each point with its neighbours: single-frame jumps of the model are what make the beam jagged.
+  const smooth = seen.map((_, i) => {
+    const near = seen.slice(Math.max(0, i - 1), i + 2);
+    return [near.reduce((sum, x) => sum + x.hand[0], 0) / near.length, near.reduce((sum, x) => sum + x.hand[1], 0) / near.length];
+  });
+  const step = Math.max(1, Math.ceil(seen.length / 40)); // at most about 40 points
+  const track = [], path = [];
+  for (let i = 0; i < seen.length; i += step) {
+    const { lm } = seen[i], sh = lm[SHOULDER + side], wide = width(lm);
+    track.push(smooth[i]);
+    path.push([clamp((smooth[i][0] - sh.x) * aspect / wide, -6, 6, 0), clamp((smooth[i][1] - sh.y) / wide, -6, 6, 0)]);
   }
-  const last = s[s.length - 1];
-  return path.length < 3 ? null : { path, anchor: { x: last[SHOULDER + side].x, y: last[SHOULDER + side].y, width: width(last) } };
+  const mean = pick => seen.reduce((sum, x) => sum + pick(x.lm), 0) / seen.length;
+  return { track, path, anchor: { x: mean(lm => lm[SHOULDER + side].x), y: mean(lm => lm[SHOULDER + side].y), width: mean(width) } };
 }
 
 /** The same swing as a smooth pendulum: every point keeps its direction from the shoulder but at one constant arm length. */
