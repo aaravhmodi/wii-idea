@@ -1,0 +1,10 @@
+.env*
+.codex
+graphify-out
+SWARM.md
+PLAN.md
+node_modules
+dist
+scripts
+fixtures
+**/*.test.js

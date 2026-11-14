@@ -47,8 +47,13 @@ export function createPhysics() {
     ball.velocity.set(angle * 2.2, 0, -velocity);
     ball.angularVelocity.set(-velocity / .32, spin * 8, 0);
   }
+  let hook = 0;
+  // Apply hook on every physics substep, independent of display refresh rate.
+  world.addEventListener('preStep', () => {
+    if (ball.position.y > .1 && ball.position.z > -12 && Math.abs(ball.position.x) < 2.2) ball.force.x += hook * 1.8;
+  });
   function step(dt, spin = 0) {
-    if (ball.position.y > .1 && ball.position.z > -12 && Math.abs(ball.position.x) < 2.2) ball.force.x += spin * 1.8;
+    hook = spin;
     world.step(1 / 120, dt, 8);
   }
   rack();

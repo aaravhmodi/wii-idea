@@ -3,26 +3,62 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0b111a">
+  <meta name="theme-color" content="#f2e8d5">
   <title>MotionPlay · Your controller</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;min-height:100svh;background:radial-gradient(ellipse at 50% 35%,#163d3b 0,transparent 55%),#0b111a;color:#eaf5f3;font:16px/1.5 system-ui,sans-serif;padding:28px max(24px,env(safe-area-inset-left)) max(24px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center}main{max-width:420px;width:100%;text-align:center}header{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:420px;margin-bottom:38px}.brand{font-weight:800;letter-spacing:-.6px;font-size:22px}.brand span{color:#80e6c1}.tag{font-size:10px;letter-spacing:2px;color:#9fb4ba;border:1px solid #34464b;border-radius:20px;padding:5px 10px}h1{font-size:32px;line-height:1.15;letter-spacing:-1px;margin:0 0 12px}.muted{color:#9fb4ba;font-size:14px}.status{min-height:56px;margin:20px 0;font-size:15px;color:#a5ecd5}.hold{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;width:236px;height:236px;border-radius:50%;border:1px solid #7ef0c6;background:radial-gradient(circle at 40% 30%,#a5f9d5,#51cda7);color:#083a2c;box-shadow:0 0 0 14px #6ce4bd0a,0 0 0 28px #6ce4bd06,0 15px 80px #40e2ad1a;font-weight:800;font-size:24px;display:block;margin:40px auto;transition:transform .15s,filter .15s}.hold small{display:block;font-size:11px;text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-top:10px}.hold:disabled{filter:saturate(.3);opacity:.45}.hold.recording{transform:scale(.96);background:#f4cf82;border-color:#f4cf82;color:#423017}.action{border:1px solid #3b625a;border-radius:12px;background:#193d34;color:#ceffec;padding:14px 22px;font:600 15px system-ui;cursor:pointer}.action:disabled{opacity:.5}button:focus-visible{outline:3px solid white;outline-offset:5px}.instructions{display:flex;justify-content:center;gap:26px;font-size:12px;color:#9fb4ba}.instructions b{display:block;color:#d8eee9;font-size:15px}.note{margin:30px auto 0;max-width:340px;border-top:1px solid #24343b;padding-top:20px;font-size:12px;color:#8fa4ab}.meter{height:4px;background:#263c3e;border-radius:4px;overflow:hidden;margin:20px auto;width:200px}.meter i{display:block;background:#a5f9d5;height:100%;width:0}#reconnect{margin-top:14px}footer{margin-top:auto;padding-top:30px;font-size:10px;letter-spacing:2px;color:#718d92}
+    * { box-sizing: border-box; }
+    html, body { overscroll-behavior: none; }
+    html.armed { touch-action: none; }
+    body { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+      margin: 0; min-height: 100svh; background: #f2e8d5; color: #1b2238; font: 16px/1.45 Georgia, serif;
+      padding: 20px max(20px, env(safe-area-inset-left)) max(20px, env(safe-area-inset-bottom));
+      display: flex; flex-direction: column; align-items: center; }
+    header { display: flex; justify-content: space-between; align-items: baseline; width: 100%; max-width: 420px;
+      border-bottom: 4px double #1b2238; padding-bottom: 8px; margin-bottom: 20px; }
+    .brand, h1, .hold, .action, .instructions b { font-family: Impact, "Arial Narrow Bold", Haettenschweiler, sans-serif; text-transform: uppercase; font-weight: 400; }
+    .brand { font-size: 26px; letter-spacing: .5px; }
+    .brand span { color: #d23b2a; }
+    .tag, footer { font: 700 11px "Courier New", ui-monospace, monospace; }
+    main { max-width: 420px; width: 100%; text-align: center; }
+    h1 { font-size: 40px; line-height: 1; margin: 0 0 8px; }
+    .muted { margin: 0; font-style: italic; }
+    .status { min-height: 48px; margin: 16px 0; padding: 10px; border: 2px solid #1b2238; background: #fffaf0;
+      font: 700 14px/1.4 "Courier New", ui-monospace, monospace; }
+    .hold { touch-action: none; width: 230px; height: 230px; border-radius: 50%; border: 4px solid #1b2238;
+      background: #d23b2a; color: #fffaf0; box-shadow: 6px 6px 0 #1b2238; font-size: 30px; line-height: 1.05;
+      display: block; margin: 28px auto; }
+    .hold small { display: block; font: 700 12px "Courier New", ui-monospace, monospace; margin-top: 10px; }
+    .hold:disabled { background: #d9cfbb; color: #5c6071; box-shadow: none; }
+    .hold.recording { background: #e0a526; color: #1b2238; box-shadow: 2px 2px 0 #1b2238; transform: translate(4px, 4px); }
+    .action { border: 2px solid #1b2238; background: #1b2238; color: #f2e8d5; padding: 12px 22px; font-size: 20px;
+      letter-spacing: .5px; box-shadow: 4px 4px 0 #d23b2a; cursor: pointer; }
+    .action:disabled { opacity: .5; box-shadow: none; }
+    button:focus-visible { outline: 3px solid #d23b2a; outline-offset: 4px; }
+    .meter { height: 10px; border: 2px solid #1b2238; background: #fffaf0; margin: 16px auto; width: 230px; }
+    .meter i { display: block; background: #1b2238; height: 100%; width: 0; }
+    .instructions { display: grid; grid-template-columns: repeat(3, 1fr); border: 2px solid #1b2238; font-size: 12px; text-align: left; }
+    .instructions span { padding: 8px; }
+    .instructions span + span { border-left: 2px solid #1b2238; }
+    .instructions b { display: block; font-size: 17px; color: #d23b2a; }
+    #reconnect { margin-top: 16px; }
+    .note { margin: 22px auto 0; max-width: 360px; border-top: 2px dashed #1b2238; padding-top: 14px; font-size: 13px; text-align: left; }
+    footer { margin-top: auto; padding-top: 24px; }
   </style>
 </head>
 <body>
   <header><div class="brand">motion<span>play</span></div><span class="tag">CONTROLLER</span></header>
   <main>
-    <h1>Your move.<br>Your way.</h1>
+    <h1>Lane 01<br>is yours.</h1>
     <p class="muted">Turn a comfortable movement into a throw.</p>
     <p id="status" class="status" role="status" aria-live="polite">Connecting to your lane…</p>
     <button id="enable" class="action">Enable motion sensors</button>
-    <button id="hold" class="hold" disabled aria-label="Hold to record, then release to throw">Hold to swing<small>Release to bowl</small></button>
+    <button id="hold" class="hold" disabled aria-label="Hold anywhere on the screen to record, then release to throw">Hold anywhere<small>Release to bowl</small></button>
     <div class="meter" aria-hidden="true"><i id="meter"></i></div>
-    <div class="instructions"><span><b>01 · Hold</b>Record movement</span><span><b>02 · Move</b>Small is enough</span><span><b>03 · Release</b>Watch your lane</span></div>
+    <div class="instructions"><span><b>1. Hold</b>Anywhere on screen</span><span><b>2. Swing</b>Small is enough</span><span><b>3. Let go</b>Watch your lane</span></div>
     <button id="reconnect" class="action" hidden>Reconnect</button>
-    <p class="note">Keep a firm grip on your phone. You never need to let go of it or swing hard. Ask Gemini on the laptop to adapt the controls to smaller movements.<br><br>Motion is captured only while holding the button. Compact measurements are sent for coaching.</p>
+    <p class="note">Keep a firm grip on your phone. You never need to let go of it or swing hard. Ask Gemini on the laptop to adapt the controls to smaller movements.<br><br>Motion is captured only while you hold the screen. Volume buttons also work on some phones. Compact measurements are sent for coaching.</p>
   </main>
-  <footer>MOTIONPLAY AI · PLAY IN YOUR OWN WAY</footer>
+  <footer>MOTIONPLAY BOWL · EST. 2026</footer>
   <script type="module" src="/src/controller/main.js"></script>
 </body>
 </html>

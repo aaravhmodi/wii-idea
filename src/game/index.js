@@ -4,8 +4,7 @@ import { BowlingScore, validateDrill } from './scoring.js';
 
 export function createGame(container) {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#080f20');
-  scene.fog = new THREE.Fog('#080f20', 25, 68);
+  scene.background = new THREE.Color('#f2e8d5');
   const camera = new THREE.PerspectiveCamera(48, 1, .1, 100);
   camera.position.set(0, 8.6, 17.2); camera.lookAt(0, 0, -3.4);
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
@@ -19,45 +18,44 @@ export function createGame(container) {
   renderer.domElement.setAttribute('aria-label', 'Live 3D bowling lane');
   container.append(renderer.domElement);
   if (getComputedStyle(container).position === 'static') container.style.position = 'relative';
-  scene.add(new THREE.HemisphereLight('#c4ddff', '#302119', 2.4));
+  scene.add(new THREE.HemisphereLight('#fffaf0', '#966c41', 2.4));
   const key = new THREE.DirectionalLight('#fce5c7', 3.2);
   key.position.set(-4, 14, 5); key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048); key.shadow.camera.left = -10; key.shadow.camera.right = 10;
   key.shadow.camera.top = 20; key.shadow.camera.bottom = -20;
   scene.add(key);
-  const rim = new THREE.PointLight('#42d9d2', 45, 25); rim.position.set(2, 4, -12); scene.add(rim);
   const material = (color, roughness = .5, metalness = 0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
   const box = (w, h, d, x, y, z, mat) => {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
     mesh.position.set(x, y, z); mesh.receiveShadow = true; scene.add(mesh); return mesh;
   };
-  box(38, .3, 60, 0, -.7, -8, material('#101a2b'));
+  box(38, .3, 60, 0, -.7, -8, material('#d9cfbb'));
   box(5, .4, 27, 0, -.24, -3, material('#966c41'));
   // Individually shaded maple boards give the original lane its own physical texture.
   for (let i = 0; i < 23; i++) {
     const color = new THREE.Color().setHSL(.092 + (i % 3) * .003, .43, .39 + (i % 5) * .018);
     box(.199, .025, 27, (i - 11) * .203, -.005, -3, material(color, .32));
   }
-  const gutter = material('#17243a', .25, .5);
-  const rail = material('#24314c', .25, .5);
+  const gutter = material('#54545b', .25, .5);
+  const rail = material('#1b2238', .25, .5);
   for (const side of [-1, 1]) {
     box(.38, .08, 27, side * 2.55, -.1, -3, gutter);
     box(.13, .27, 27, side * 2.8, .01, -3, rail);
-    box(.035, .025, 26.7, side * 2.78, .16, -3, new THREE.MeshBasicMaterial({ color: '#3eddd0' }));
+    box(.035, .025, 26.7, side * 2.78, .16, -3, new THREE.MeshBasicMaterial({ color: '#e0a526' }));
     box(.5, .4, 27, side * 7.5, -.3, -3, rail);
-    box(.03, .02, 27, side * 7.5, -.07, -3, new THREE.MeshBasicMaterial({ color: '#35486b' }));
+    box(.03, .02, 27, side * 7.5, -.07, -3, new THREE.MeshBasicMaterial({ color: '#966c41' }));
   }
   box(4.65, .012, .055, 0, .025, 5.8, material('#3c3e42'));
   for (let i = -3; i <= 3; i++) {
     const arrow = new THREE.Mesh(new THREE.ConeGeometry(.075, .2, 3), material('#714d30'));
     arrow.rotation.x = -Math.PI / 2; arrow.position.set(i * .46, .04, -1.7 + Math.abs(i) * .16); scene.add(arrow);
   }
-  box(9, 4.5, .5, 0, 1.5, -15, material('#111d31'));
-  for (let i = -3; i <= 3; i++) box(.04, 2, .03, i * 1.1, 1.6, -14.7, new THREE.MeshBasicMaterial({ color: i % 2 ? '#50779c' : '#45bdb6' }));
+  box(9, 4.5, .5, 0, 1.5, -15, material('#d9cfbb'));
+  for (let i = -3; i <= 3; i++) box(.04, 2, .03, i * 1.1, 1.6, -14.7, new THREE.MeshBasicMaterial({ color: i % 2 ? '#d23b2a' : '#e0a526' }));
 
   const physics = createPhysics();
-  const pinMaterial = material('#f4f4eb', .22);
-  const redMaterial = material('#e5675b', .25);
+  const pinMaterial = material('#fffaf0', .22);
+  const redMaterial = material('#d23b2a', .25);
   const pinPoints = [[.18,-.47],[.23,-.36],[.24,-.19],[.21,0],[.12,.18],[.11,.29],[.155,.39],[.14,.48],[.08,.53],[0,.55]].map(([x,y]) => new THREE.Vector2(x,y));
   const pinGeometry = new THREE.LatheGeometry(pinPoints, 20);
   const pinMeshes = physics.pins.map(() => {
@@ -69,25 +67,25 @@ export function createGame(container) {
     }
     scene.add(group); return group;
   });
-  const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(.32, 32, 24), material('#48ded4', .16, .45));
+  const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(.32, 32, 24), material('#d23b2a', .48));
   ballMesh.castShadow = true; scene.add(ballMesh);
   for (const [x,z] of [[-.075,.04],[.075,.04],[0,-.1]]) {
-    const hole = new THREE.Mesh(new THREE.SphereGeometry(.034, 8, 8), material('#0b3d43'));
+    const hole = new THREE.Mesh(new THREE.SphereGeometry(.034, 8, 8), material('#1b2238'));
     hole.position.set(x, .303, z); ballMesh.add(hole);
   }
   const target = new THREE.Group(); scene.add(target); target.visible = false;
-  const targetMat = new THREE.MeshBasicMaterial({ color: '#79edc9', transparent: true, opacity: .16, depthWrite: false });
+  const targetMat = new THREE.MeshBasicMaterial({ color: '#e0a526' });
   const targetFloor = new THREE.Mesh(new THREE.PlaneGeometry(1, 8), targetMat);
   targetFloor.rotation.x = -Math.PI / 2; targetFloor.position.set(0,.032,-5); target.add(targetFloor);
-  const targetLine = new THREE.Mesh(new THREE.PlaneGeometry(1, .09), new THREE.MeshBasicMaterial({ color: '#8fffd5', transparent: true, opacity: .8 }));
+  const targetLine = new THREE.Mesh(new THREE.PlaneGeometry(1, .09), new THREE.MeshBasicMaterial({ color: '#1b2238' }));
   targetLine.rotation.x = -Math.PI / 2; targetLine.position.set(0,.04,-8.5); target.add(targetLine);
 
   const hud = document.createElement('div');
-  hud.style.cssText = 'position:absolute;left:24px;right:24px;top:24px;z-index:2;pointer-events:none;color:#ecf4ff;font-family:inherit;';
-  hud.innerHTML = '<div style="display:flex;justify-content:space-between;gap:16px;align-items:start"><div><div style="font-size:10px;letter-spacing:.2em;color:#8fa9bd;margin-bottom:6px">MOTIONPLAY / LANE 01</div><div data-frame style="font-size:22px;font-weight:600"></div></div><div style="text-align:right"><span style="font-size:10px;letter-spacing:.15em;color:#8fa9bd">SCORE</span><div data-total style="font-size:36px;line-height:1.1;font-weight:600"></div></div></div><div data-frames style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:20px;max-width:620px"></div>';
+  hud.style.cssText = 'position:absolute;left:clamp(8px,3vw,24px);right:clamp(8px,3vw,24px);top:24px;z-index:2;pointer-events:none;color:#1b2238;font-family:Georgia,serif;max-width:620px;background:#f2e8d5;border:2px solid #1b2238;';
+  hud.innerHTML = `<div style="display:flex;justify-content:space-between;gap:16px;align-items:start;padding:12px"><div><div style='font:400 18px Impact,"Arial Narrow Bold",Haettenschweiler,sans-serif;margin-bottom:6px'>MOTIONPLAY / LANE 01</div><div data-frame style='font:700 18px "Courier New",ui-monospace,monospace'></div></div><div style="text-align:right"><span style='font:400 18px Impact,"Arial Narrow Bold",Haettenschweiler,sans-serif'>SCORE</span><div data-total style='font:700 36px/1.1 "Courier New",ui-monospace,monospace'></div></div></div><div data-frames style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr)) minmax(0,2fr);border-top:2px solid #1b2238"></div>`;
   container.append(hud);
   const status = document.createElement('div');
-  status.style.cssText = 'position:absolute;bottom:24px;left:24px;right:24px;z-index:2;color:#b8c9dc;text-align:center;font:13px/1.6 inherit;pointer-events:none;text-shadow:0 1px 6px #000;';
+  status.style.cssText = 'position:absolute;bottom:24px;left:clamp(8px,3vw,24px);right:clamp(8px,3vw,24px);z-index:2;color:#1b2238;background:#f2e8d5;border:2px solid #1b2238;padding:8px 12px;text-align:center;font:14px/1.5 Georgia,serif;pointer-events:none;';
   status.setAttribute('aria-live','polite'); container.append(status);
   let score = new BowlingScore(), busy = false, disposed = false, drill = null;
   let activeThrow = null, raf, last = performance.now();
@@ -97,14 +95,19 @@ export function createGame(container) {
     const list = hud.querySelector('[data-frames]'); list.replaceChildren();
     score.frames.forEach((frame, i) => {
       const cell = document.createElement('div');
-      cell.style.cssText = `padding:7px 2px;border-radius:6px;text-align:center;background:${i === score.frameIndex ? '#23434bbd' : '#0b182bc7'};border:1px solid ${i === score.frameIndex ? '#539b9a' : '#243347'};font-size:11px;`;
-      const number = document.createElement('div'); number.textContent = i + 1; number.style.color = '#7c96af';
+      cell.style.cssText = `min-width:0;text-align:center;background:${i === score.frameIndex ? '#e0a526' : '#f2e8d5'};border-left:${i ? '2px solid #1b2238' : '0'};font:700 12px "Courier New",ui-monospace,monospace;`;
+      const number = document.createElement('div'); number.textContent = i + 1;
+      number.style.cssText = 'padding:3px 0;border-bottom:2px solid #1b2238;';
+      if (i === score.frameIndex) cell.setAttribute('aria-current', 'step');
       const marks = document.createElement('div'); marks.textContent = frame.length ? frame.map((n, j) => n === 10 && (j === 0 || i === 9 && frame[j-1] === 10) ? 'X' : j > 0 && n + frame[j-1] === 10 && frame[j-1] !== 10 ? '/' : n === 0 ? '–' : n).join(' ') : '·';
-      const total = document.createElement('div'); total.textContent = score.totals[i] ?? '–'; total.style.cssText = 'font-weight:600;margin-top:3px';
+      marks.style.cssText = 'box-sizing:border-box;min-height:26px;width:max-content;min-width:65%;max-width:100%;margin-left:auto;padding:3px 1px;border-left:2px solid #1b2238;border-bottom:2px solid #1b2238;white-space:nowrap;color:#1b2238;';
+      // Darker red keeps small strike/spare marks at AA on paper and mustard.
+      if (/[X/]/.test(marks.textContent)) marks.style.color = '#7c2118';
+      const total = document.createElement('div'); total.textContent = score.totals[i] ?? '–'; total.style.cssText = 'font-size:18px;font-weight:700;padding:6px 0';
       cell.append(number, marks, total); list.append(cell);
     });
   }
-  function readyText() { status.textContent = score.complete ? 'All ten frames played. Start a new game to keep practicing.' : drill ? `${drill.title} · aim through the mint target corridor` : 'Your phone is the controller. A comfortable movement is all it takes.'; }
+  function readyText() { status.textContent = score.complete ? 'All ten frames played. Start a new game to keep practicing.' : drill ? `${drill.title} · aim through the mustard target corridor` : 'Your phone is the controller. A comfortable movement is all it takes.'; }
   function finishThrow() {
     const current = activeThrow; activeThrow = null;
     const result = score.add(Math.min(score.standing, physics.collect()));

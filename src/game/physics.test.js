@@ -11,3 +11,12 @@ it('a straight throw physically reaches and knocks the rack', () => {
   expect(p.collect()).toBe(0);
   p.rack(); expect(p.pins.filter(pin => pin.active)).toHaveLength(10);
 });
+it('applies the same hook at 60 and 120 display frames per second', () => {
+  const positions = [60, 120].map(hz => {
+    const p = createPhysics(); p.launch({ speed: .65, angle: 0, spin: 1 });
+    for (let i = 0; i < hz; i++) p.step(1 / hz, 1);
+    return p.ball.position;
+  });
+  expect(positions[0].x).toBeCloseTo(positions[1].x, 5);
+  expect(positions[0].z).toBeCloseTo(positions[1].z, 5);
+});
