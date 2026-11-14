@@ -5,7 +5,7 @@ const WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/was
 const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
 
 const KEEP_MS = 6000;      // rolling buffer length
-const FRAME_EVERY_MS = 150;
+const FRAME_EVERY_MS = 100; // 10 fps: smooth enough for the replay panel
 const POSE_EVERY_MS = 30;  // caps the buffer at 200 pose samples
 const MAX_B64 = 53000;     // base64 chars for just under 40 KB of JPEG
 const BONES = [[11, 12], [11, 23], [12, 24], [23, 24], [23, 25], [25, 27], [24, 26], [26, 28], [11, 13], [13, 15], [12, 14], [14, 16]];
@@ -199,6 +199,7 @@ export function createCamera(container) {
     const picks = [...new Set([0, Math.floor((f.length - 1) / 2), f.length - 1])].filter(i => i >= 0);
     return {
       frames: picks.map(i => f[i].jpeg),
+      clip: f.map(x => x.jpeg), // every buffered frame of the window, for the replay panel
       pose: poseStats(poses.filter(p => p.t >= from).map(p => p.lm), canvas.width / canvas.height),
     };
   }

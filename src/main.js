@@ -7,10 +7,12 @@ import { createSwingLab } from './ui/swinglab.js';
 import { getCoaching, getHistory, recordThrow, bestThrow, trends } from './coach/index.js';
 import { validSwing } from './controller/capture.js';
 import { createCamera } from './camera/index.js';
+import { createReplay } from './camera/replay.js';
 
 const game = createGame(document.getElementById('game'));
 const lab = createSwingLab(document.getElementById('lab'));
 const camera = createCamera(document.getElementById('camera'));
+const replay = createReplay(document.getElementById('replay'));
 const status = document.getElementById('status');
 let throwNo = 0;
 
@@ -24,6 +26,7 @@ async function onSwing({ samples }) {
   const params = toThrowParams(features);
   // The message arrives right after release, so the last durationMs (+ relay delay margin) of camera buffer is the swing.
   const seen = camera.active ? camera.capture(features.durationMs + 300) : { frames: [], pose: null };
+  replay.show(seen.clip);
   const bestProfile = bestThrow(getHistory())?.profile ?? null;
 
   lab.show({ features, profile, bestProfile, result: null });

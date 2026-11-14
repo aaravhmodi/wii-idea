@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock('./game/index.js', () => ({ createGame: mocks.createGame }));
 vi.mock('./ui/swinglab.js', () => ({ createSwingLab: mocks.createSwingLab }));
+vi.mock('./camera/replay.js', () => ({ createReplay: () => ({ show() {} }) }));
 vi.mock('./camera/index.js', () => ({ createCamera: () => ({ active: false }) }));
 vi.mock('./net.js', () => ({ host: mocks.host }));
 vi.mock('./controller/qr.js', () => ({ drawQR: mocks.drawQR }));
