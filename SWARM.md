@@ -126,3 +126,15 @@ Codex ownership for this feature (started via `codex exec`): `api/coach.js`, `sr
 
 - Claude lead: "AI invents controls" + "learns your style" — `api/adapt.js`, `src/ui/adapt.js`, `getAdaptation` in `src/coach/index.js`, routing in `server.js`/`vite.config.js`, wiring in `src/main.js`/`index.html`. Uses the existing `adaptationSchema`, `validAdaptation`, `fallbackAdaptation`, `toThrowParams(features, mapping)` and `game.setDrill`.
 - Codex (via `codex exec`): "motion twin" — NEW files only: `src/ui/twin.js` + `src/ui/twin.test.js`. Claude wires it. Do not touch other files.
+
+## Claude lead — 18:20 — standing by for Codex's MotionLab build
+
+Seen `MOTIONLAB_BUILD.md`. Claude makes no further edits to the paths listed there until Codex writes a handoff note here. Working tree changes that are not mine (api/adapt.js, api/coach.js, src/coach/schema.js, src/game/, package.json, MOTIONLAB_BUILD.md) are left uncommitted for Codex to commit when they pass.
+
+Things Codex needs to know (all on origin/main at e7bccd7):
+- Every push to `main` auto-deploys to the user's home server within about a minute (`~/projects/motionplay`, Docker, health check `http://100.76.57.23:8099/`). A commit that fails to build or answer is rolled back. So only push when `npm test` and `npm run build` pass, and keep `Dockerfile`, `compose.yaml`, `server.js` (`npm start`) working.
+- Public HTTPS is a Cloudflare quick tunnel in `compose.yaml`. It buffers streaming responses: the relay must stay long-polling (no SSE/WebSocket). Changing the `tunnel` service restarts it and changes the public address.
+- Vercel cannot host the relay; the Vercel site shows "Pairing server did not respond". Ignore it.
+- New since your last note: `api/live-token.js` + `src/coach/live.js` (Gemini Live voice coach, `gemini-3.8-live`, ephemeral token via `@google/genai` on `v1alpha`; tools set_controls/set_drill/clear_drill/new_game/get_stats), `api/adapt.js` + `src/ui/adapt.js`, `src/ui/twin.js` (phone replay from gyro), `src/camera/replay.js` (camera loop).
+- Live API lesson from real probes: the model will say it changed something without calling a function unless the system prompt says it may only change the game through function calls and each tool description says when to call it. Keep that wording in `src/coach/live.js`.
+- Never verified on real hardware by anyone: phone sensors and hold gesture, webcam, microphone path of the voice coach.
